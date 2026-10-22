@@ -1,0 +1,61 @@
+package main
+
+import (
+	"flag"
+	"fmt"
+	"os"
+	"strings"
+	"time"
+
+	tea "github.com/charmbracelet/bubbletea"
+
+	"openwrt-monitor-tui/collect"
+	_ "openwrt-monitor-tui/prep"
+	"openwrt-monitor-tui/ui"
+	"openwrt-monitor-tui/ui/kit"
+)
+
+// version is injected with -ldflags "-X main.version=..." by the release build.
+var version = "dev"
+
+func main() {
+	started := time.Now()
+	refresh := flag.Duration("refresh", time.Second, "refresh interval")
+	showVersion := flag.Bool("version", false, "print the version and exit")
+	ascii := flag.Bool("ascii", false, "use ASCII glyphs (serial console / non-UTF-8 terminals)")
+	mouse := flag.Bool("mouse", true, "mouse support: click tabs, wheel scroll (-mouse=false to keep text selection)")
+	lang := flag.String("lang", "auto", "interface language: auto, en, zh")
+	color := flag.String("color", "auto", "colors: auto, on, off (auto keeps them off below 1 GHz)")
+	flag.Parse()
+
+	if *showVersion {
+		fmt.Println("openwrt-monitor-tui " + version)
+		return
+	}
+
+	kit.SetLang(*lang)
+	if *ascii {
+		kit.SetASCII()
+	}
+
+	switch strings.ToLower(*color) {
+	case "on", "always", "yes":
+		kit.SetColor(true)
+	case "off", "never", "no":
+		kit.SetColor(false)
+	default:
+		// NO_COLOR is the de-facto standard opt-out; honour it in auto mode.
+		kit.SetColor(!collect.LowEnd() && os.Getenv("NO_COLOR") == "")
+	}
+
+	opts := []tea.ProgramOption{tea.WithAltScreen()}
+	if *mouse {
+		opts = append(opts, tea.WithMouseCellMotion())
+	}
+
+	p := tea.NewProgram(ui.New(*refresh, started), opts...)
+	if _, err := p.Run(); err != nil {
+		fmt.Fprintln(os.Stderr, "openwrt-monitor-tui:", err)
+		os.Exit(1)
+	}
+}

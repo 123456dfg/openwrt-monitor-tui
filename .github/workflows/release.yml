@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: build and publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: build all targets
+        run: make all VERSION=${{ github.ref_name }}
+
+      - name: checksums
+        run: |
+          cd dist
+          sha256sum openwrt-monitor-tui-* > SHA256SUMS
+
+      - name: publish
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/openwrt-monitor-tui-*
+            dist/SHA256SUMS
+          generate_release_notes: true
+          body: |
+            Cross-compiled static binaries for OpenWrt routers:
+
+            | file | target |
+            | --- | --- |
+            | `openwrt-monitor-tui-mipsle` | ramips/mt7621, mt76x8 (most home routers) |
+            | `openwrt-monitor-tui-mips` | ath79/ar71xx big-endian |
+            | `openwrt-monitor-tui-386` | OpenWrt 19.07 x86 (32-bit default) |
+            | `openwrt-monitor-tui-amd64` | x86_64 images |
+
+            Copy the matching file to the router, `chmod +x`, and run as root.
+            Check `SHA256SUMS` with `sha256sum -c SHA256SUMS`.
