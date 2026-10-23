@@ -2,7 +2,7 @@ package language
 
 import (
 	"openwrt-monitor-tui/ui/kit"
-	"openwrt-monitor-tui/ui/widgets"
+	"openwrt-monitor-tui/ui/widgets/components"
 )
 
 // Choices are the values behind the picker rows, in display order.
@@ -26,7 +26,7 @@ func langName(code string) string {
 // Pane renders the language picker. The active pick is marked with (o); the
 // cursor only appears once the content has the focus.
 func Pane(sel, focus int, active bool) []string {
-	r := widgets.NewRadio(sel)
+	r := components.NewRadio(sel)
 	if active {
 		r.Cursor = focus
 	} else {

@@ -6,7 +6,7 @@ import (
 
 	"openwrt-monitor-tui/collect"
 	"openwrt-monitor-tui/ui/kit"
-	"openwrt-monitor-tui/ui/widgets"
+	"openwrt-monitor-tui/ui/widgets/components"
 )
 
 // State is everything the Wi-Fi pane needs to draw itself.
@@ -73,7 +73,7 @@ func rows(st State) []string {
 		if f.Key.Value == "" {
 			pw = "-"
 		} else {
-			pw = widgets.Mask(8) // fixed width: the real length is secret
+			pw = components.Mask(8) // fixed width: the real length is secret
 		}
 	}
 	ch := f.Channel.View(editing(FocusChannel))
@@ -102,8 +102,8 @@ func buttonsRow(f Form, focus int) string {
 	return actionRow(f, focus).View()
 }
 
-func actionRow(f Form, focus int) widgets.Buttons {
-	return widgets.Buttons{
+func actionRow(f Form, focus int) components.Buttons {
+	return components.Buttons{
 		Labels:    [2]string{kit.Tr.Apply, kit.Tr.Cancel},
 		Focus:     buttonIndex(focus),
 		Busy:      f.Busy,
@@ -121,11 +121,9 @@ func buttonIndex(focus int) int {
 	return -1
 }
 
-// ButtonHits returns the content-relative x ranges of the two buttons. It
-// mirrors buttonsRow without styles, and uses the non-busy Apply label.
-func ButtonHits() (apply, cancel [2]int) {
-	return widgets.Buttons{Labels: [2]string{kit.Tr.Apply, kit.Tr.Cancel}}.Hits()
-}
+// ButtonHits was absorbed by components.Buttons.Click: the pane constructs
+// the same Buttons (labels come from the translations) and lets the component
+// resolve the press.
 
 func fieldRow(i int, f Form, focus int, name, value string) string {
 	marker := "  "
@@ -179,8 +177,6 @@ func ShortBand(band string) string {
 		return "5G"
 	case "6 GHz":
 		return "6G"
-	case "60 GHz":
-		return "60G"
 	case "":
 		return "Wi-Fi"
 	}

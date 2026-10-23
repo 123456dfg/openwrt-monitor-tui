@@ -13,17 +13,18 @@ import (
 
 // procList refreshes the process table on a slower cadence: opening every
 // /proc/<pid>/stat is by far the most expensive part of a sample, and RSS
-// rankings do not need to move every second.
-func (c *Collector) procList(now time.Time) ([]Proc, int) {
+// rankings do not need to move every second. The full list is returned so the
+// UI can re-sort it by CPU or memory without a resample.
+func (c *Collector) procList(now time.Time) []Proc {
 	if stale(c.procsAt, now, c.procEvery) {
 		dt := 0.0
 		if !c.procsAt.IsZero() {
 			dt = now.Sub(c.procsAt).Seconds()
 		}
-		c.procs, c.procN, c.procCPU = readProcs(12, c.procCPU, dt)
+		c.procs, c.procCPU = readProcs(c.procCPU, dt)
 		c.procsAt = now
 	}
-	return c.procs, c.procN
+	return c.procs
 }
 
 // procTicksPerSec is USER_HZ. Linux fixes it at 100 on every architecture,
@@ -32,15 +33,16 @@ const procTicksPerSec = 100.0
 
 // readProcs walks /proc with a small worker pool: every entry is a separate
 // syscall, and on a router the wall time is dominated by that I/O, not CPU.
-func readProcs(n int, prev map[int]uint64, dt float64) ([]Proc, int, map[int]uint64) {
+// The list comes back sorted by RSS; the UI re-sorts a copy as needed.
+func readProcs(prev map[int]uint64, dt float64) ([]Proc, map[int]uint64) {
 	dir, err := os.Open("/proc")
 	if err != nil {
-		return nil, 0, nil
+		return nil, nil
 	}
 	names, _ := dir.Readdirnames(-1)
 	dir.Close()
 	if len(names) == 0 {
-		return nil, 0, nil
+		return nil, nil
 	}
 
 	idx := make([]int, 0, len(names)) // only PID dirs take part in the walk
@@ -50,7 +52,7 @@ func readProcs(n int, prev map[int]uint64, dt float64) ([]Proc, int, map[int]uin
 		}
 	}
 	if len(idx) == 0 {
-		return nil, 0, nil
+		return nil, nil
 	}
 
 	found := make([]Proc, len(idx))
@@ -97,11 +99,7 @@ func readProcs(n int, prev map[int]uint64, dt float64) ([]Proc, int, map[int]uin
 		procs = append(procs, p)
 	}
 	sort.Slice(procs, func(i, j int) bool { return procs[i].RSS > procs[j].RSS })
-	total := len(procs)
-	if len(procs) > n {
-		procs = procs[:n]
-	}
-	return procs, total, next
+	return procs, next
 }
 
 // readProc gets name and RSS from a single /proc/<pid>/stat read.

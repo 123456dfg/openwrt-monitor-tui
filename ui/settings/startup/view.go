@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"openwrt-monitor-tui/ui/kit"
-	"openwrt-monitor-tui/ui/widgets"
+	"openwrt-monitor-tui/ui/widgets/components"
 )
 
 // State is everything the startup pane draws.
@@ -51,7 +51,7 @@ func Pane(st State) []string {
 		if st.Active && row == f.Focus {
 			marker = kit.Glyph.Sel + " "
 		}
-		check := widgets.Checkbox{On: entry.Enabled}.String()
+		check := components.Checkbox{On: entry.Enabled}.String()
 
 		text := entry.Text
 		editing := f.Editing && f.EditIndex() == f.EntryIndex(row)
@@ -96,11 +96,6 @@ func RowOffset(st State) int {
 	return off + max(1, st.Form.TaskCount()) + 1
 }
 
-// CheckHits is the x range of the switch inside a task row, relative to the
-// start of the pane content.
-func CheckHits() [2]int { return [2]int{4, 6} }
-
-// ButtonHits returns the x ranges of the buttons inside the pane.
-func ButtonHits() (apply, cancel [2]int) {
-	return (Form{}).Buttons().Hits()
-}
+// The switch columns and the button presses are handled by
+// components.Checkbox.Click and components.Buttons.Click; the pane only owns
+// the row layout.

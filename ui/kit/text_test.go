@@ -1,13 +1,10 @@
 package kit
 
 import (
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
-
-	"openwrt-monitor-tui/task"
 )
 
 func TestFormatUptime(t *testing.T) {
@@ -36,22 +33,5 @@ func TestPadAndBytes(t *testing.T) {
 	}
 	if got := HumanBytes(2048); got != "2.0K" {
 		t.Fatalf("human: %q", got)
-	}
-}
-
-func TestGeoCache(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "cache")
-	c := task.Open(path)
-	if err := c.Put("geo", "jp"); err != nil {
-		t.Fatal(err)
-	}
-	old := geoCache
-	geoCache = func() *task.Cache { return c }
-	t.Cleanup(func() { geoCache = old })
-
-	// A cached answer is returned without touching the network.
-	code, ok := geoCountry()
-	if !ok || code != "JP" {
-		t.Fatalf("geo: %q %v", code, ok)
 	}
 }

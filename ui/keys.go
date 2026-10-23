@@ -3,6 +3,8 @@ package ui
 import (
 	tea "github.com/charmbracelet/bubbletea"
 
+	"openwrt-monitor-tui/ui/network"
+	"openwrt-monitor-tui/ui/procs"
 	"openwrt-monitor-tui/ui/settings"
 	"openwrt-monitor-tui/ui/settings/language"
 	"openwrt-monitor-tui/ui/settings/wifi"
@@ -27,6 +29,12 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}
 		}
 		m.subActive = false
+		return m, nil
+	}
+	if msg.String() == "esc" && m.tab == 1 && m.netActive {
+		// The network pane returns to its sidebar on Esc, like the settings
+		// tab does; only when the sidebar is active does Esc quit.
+		m.netActive = false
 		return m, nil
 	}
 	switch msg.String() {
@@ -111,6 +119,45 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.showKeys = !m.showKeys
 		}
 		return m, nil
+	}
+
+	if m.tab == 1 && m.netActive {
+		// Network content has the focus; Esc returns to the sidebar first.
+		if msg.String() == "esc" {
+			m.netActive = false
+			return m, nil
+		}
+		if m.netOpen == network.TabSpeed {
+			return m.updateSpeed(msg)
+		}
+		// The entered overview keeps the generic scroll keys below.
+	} else if m.tab == 1 {
+		// The sidebar is still part of the main tab: arrows keep their usual
+		// meaning there.
+		switch msg.String() {
+		case "up", "k":
+			m.moveNetSel(-1)
+		case "down", "j":
+			m.moveNetSel(+1)
+		case "left", "h":
+			return m.switchTab(-1)
+		case "right", "l":
+			return m.switchTab(+1)
+		case "enter", " ":
+			m.netActive = true
+		}
+		return m, nil
+	}
+
+	if m.tab == 2 {
+		switch msg.String() {
+		case "M":
+			m.sortProcs(procs.ByMem)
+			return m, nil
+		case "P":
+			m.sortProcs(procs.ByCPU)
+			return m, nil
+		}
 	}
 
 	switched := false

@@ -467,8 +467,9 @@ func TestStartupClicks(t *testing.T) {
 	m.subActive = true
 	off := startup.LineOffset(m.settingsState().Startup)
 
-	// clicking the switch flips it; clicking the text edits it
-	check := startup.CheckHits()
+	// clicking the switch flips it; clicking the text edits it.
+	// The switch is drawn at columns 4..6 of the pane content.
+	check := [2]int{4, 6}
 	mm, _ := m.handleMouse(tea.MouseMsg{
 		Button: tea.MouseButtonLeft, Action: tea.MouseActionPress,
 		X: kit.SidebarW + 2 + check[0], Y: 4 + off,
@@ -492,7 +493,8 @@ func TestStartupClicks(t *testing.T) {
 	// Apply button
 	off = startup.LineOffset(m.settingsState().Startup)
 	row := off + max(1, m.startup.TaskCount()) + 1
-	ap, _ := startup.ButtonHits()
+	btns := m.startup.Buttons()
+	ap := btns.Hits()[0]
 	mm, cmd := m.handleMouse(tea.MouseMsg{
 		Button: tea.MouseButtonLeft, Action: tea.MouseActionPress,
 		X: kit.SidebarW + 2 + ap[0], Y: 4 + row,
@@ -526,8 +528,8 @@ func TestCronToggle(t *testing.T) {
 		t.Fatalf("toggle error: %q", m.cronErr)
 	}
 
-	// clicking the switch also toggles
-	check := cron.CheckHits()
+	// clicking the switch also toggles; the switch is drawn at columns 4..6
+	check := [2]int{4, 6}
 	st := m.settingsState().Cron
 	mm, cmd = m.handleMouse(tea.MouseMsg{
 		Button: tea.MouseButtonLeft, Action: tea.MouseActionPress,

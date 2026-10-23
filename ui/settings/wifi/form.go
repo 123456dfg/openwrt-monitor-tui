@@ -6,7 +6,7 @@ import (
 
 	"openwrt-monitor-tui/collect"
 	"openwrt-monitor-tui/ui/kit"
-	"openwrt-monitor-tui/ui/widgets"
+	"openwrt-monitor-tui/ui/widgets/components"
 )
 
 // Focus order of the Wi-Fi form; Apply/Cancel are reached like any field.
@@ -30,11 +30,11 @@ type Form struct {
 	Radio  string // wifi-device section name
 	Iface  string // wifi-iface section name, "" when the radio has no AP
 
-	Enabled  widgets.Checkbox
-	SSID     widgets.Input
-	Key      widgets.Input
-	Channel  widgets.Select
-	Security widgets.Select
+	Enabled  components.Checkbox
+	SSID     components.Input
+	Key      components.Input
+	Channel  components.Select
+	Security components.Select
 	Width    int
 
 	OrgEnabled  bool
@@ -55,11 +55,11 @@ func FromBand(b collect.WifiBand, focus int) Form {
 		Radio:  b.Radio,
 		Iface:  b.Iface,
 
-		Enabled:  widgets.Checkbox{On: b.Enabled},
-		SSID:     widgets.NewInput(b.SSID, 32),
-		Key:      widgets.NewInput(b.Key, 63),
-		Channel:  widgets.NewSelect(channelOptions(b.Name, b.Channel), b.Channel),
-		Security: widgets.NewSelect(securityOptions(b.Security), b.Security),
+		Enabled:  components.Checkbox{On: b.Enabled},
+		SSID:     components.NewInput(b.SSID, 32),
+		Key:      components.NewInput(b.Key, 63),
+		Channel:  components.NewSelect(channelOptions(b.Name, b.Channel), b.Channel),
+		Security: components.NewSelect(securityOptions(b.Security), b.Security),
 		Width:    b.Width,
 
 		OrgEnabled:  b.Enabled,
@@ -157,7 +157,7 @@ func (f Form) Plan() []Set {
 
 // Text is the input widget of the focused row, or nil when the row is not a
 // text field.
-func (f *Form) Text() *widgets.Input {
+func (f *Form) Text() *components.Input {
 	switch f.Focus {
 	case FocusSSID:
 		return &f.SSID
@@ -168,7 +168,7 @@ func (f *Form) Text() *widgets.Input {
 }
 
 // Picker is the select widget of the focused row, or nil.
-func (f *Form) Picker() *widgets.Select {
+func (f *Form) Picker() *components.Select {
 	switch f.Focus {
 	case FocusChannel:
 		return &f.Channel

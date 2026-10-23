@@ -12,10 +12,12 @@ import (
 	"openwrt-monitor-tui/collect"
 	"openwrt-monitor-tui/ui/kit"
 	"openwrt-monitor-tui/ui/network"
+	"openwrt-monitor-tui/ui/network/speedtest"
 	"openwrt-monitor-tui/ui/settings"
 	"openwrt-monitor-tui/ui/settings/cron"
 	"openwrt-monitor-tui/ui/settings/wifi"
 	"openwrt-monitor-tui/ui/status"
+	"openwrt-monitor-tui/ui/widgets/components"
 )
 
 func fixture() collect.Snapshot {
@@ -50,6 +52,90 @@ func newTestModel() model {
 	m.subOpen = settings.Wifi
 	m.syncForm()
 	return m
+}
+
+// Regression: the speed pane sits to the right of the sidebar; a click must
+// translate into pane coordinates (sidebar width + gutter), and the sidebar
+// itself must be keyboard-navigable like the settings tab.
+func TestSpeedPaneMouse(t *testing.T) {
+	kit.SetLang("en")
+	m := newTestModel()
+	m.tab = 1
+	m.netOpen, m.netActive = network.TabSpeed, true
+
+	startY := bandRowY + speedtest.StartRow
+	click := func(x, y int) tea.MouseMsg {
+		return tea.MouseMsg{X: x, Y: y, Button: tea.MouseButtonLeft, Action: tea.MouseActionPress}
+	}
+
+	// A click on the start button starts the measurement flow (the returned
+	// command is not executed here, so no network is touched).
+	mm, cmd := m.handleMouse(click(kit.SidebarW+10, startY))
+	m = mm.(model)
+	if cmd == nil {
+		t.Fatal("start click produced no command")
+	}
+	if m.speed.Running {
+		t.Fatal("start click set Running without a prepared server")
+	}
+
+	// One row below the button must do nothing.
+	mm, cmd = m.handleMouse(click(kit.SidebarW+10, startY+1))
+	m = mm.(model)
+	if cmd != nil {
+		t.Fatal("click beside the button started something")
+	}
+}
+
+// The network sidebar navigates like the settings sidebar: j/k previews,
+// enter opens, esc returns.
+func TestNetworkSidebarKeyboard(t *testing.T) {
+	kit.SetLang("en")
+	m := newTestModel()
+	m.tab = 1
+
+	// enter opens the previewed sub-tab (overview by default)
+	mm, _ := m.handleKey(tea.KeyMsg{Type: tea.KeyEnter})
+	m = mm.(model)
+	if !m.netActive || m.netOpen != network.TabOverview {
+		t.Fatalf("enter: active=%v open=%d", m.netActive, m.netOpen)
+	}
+
+	// esc returns to the sidebar
+	mm, _ = m.handleKey(tea.KeyMsg{Type: tea.KeyEsc})
+	m = mm.(model)
+	if m.netActive {
+		t.Fatal("esc did not return to the sidebar")
+	}
+
+	// j moves to the speed test and previews it; enter opens it
+	mm, _ = m.handleKey(tea.KeyMsg{Type: tea.KeyDown})
+	m = mm.(model)
+	if m.netSel != network.TabSpeed || m.netOpen != network.TabSpeed {
+		t.Fatalf("j: sel=%d open=%d", m.netSel, m.netOpen)
+	}
+	mm, _ = m.handleKey(tea.KeyMsg{Type: tea.KeyEnter})
+	m = mm.(model)
+	if !m.netActive || m.netOpen != network.TabSpeed {
+		t.Fatalf("enter speed: active=%v open=%d", m.netActive, m.netOpen)
+	}
+
+	// inside the speed pane, enter starts the flow (prepare command; not run)
+	mm, cmd := m.handleKey(tea.KeyMsg{Type: tea.KeyEnter})
+	m = mm.(model)
+	if cmd == nil {
+		t.Fatal("enter in speed pane did not start the flow")
+	}
+	if m.speed.Running {
+		t.Fatal("running set before the server was prepared")
+	}
+
+	// esc leaves the pane instead of quitting
+	mm, _ = m.handleKey(tea.KeyMsg{Type: tea.KeyEsc})
+	m = mm.(model)
+	if m.netActive {
+		t.Fatal("esc did not leave the speed pane")
+	}
 }
 
 func TestTabMarkersWithoutColor(t *testing.T) {
@@ -136,14 +222,15 @@ func TestButtonsShareRow(t *testing.T) {
 		t.Fatal("unexpected button count")
 	}
 
-	ap, ca := wifi.ButtonHits()
+	btns := components.Buttons{Labels: [2]string{kit.Tr.Apply, kit.Tr.Cancel}}
+	hits := btns.Hits()
 	mm, cmd := m.handleMouse(tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress,
-		X: kit.SidebarW + 2 + ap[0], Y: y})
+		X: kit.SidebarW + 2 + hits[0][0], Y: y})
 	if got := mm.(model); got.form.Focus != wifi.FocusApply || !got.form.Busy || cmd == nil {
 		t.Fatal("apply click did not dispatch")
 	}
 	mm, _ = m.handleMouse(tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress,
-		X: kit.SidebarW + 2 + ca[0], Y: y})
+		X: kit.SidebarW + 2 + hits[1][0], Y: y})
 	if got := mm.(model); got.form.SSID.Value != "OpenWrt" {
 		t.Fatal("cancel click did not revert")
 	}

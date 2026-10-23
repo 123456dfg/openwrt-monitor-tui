@@ -33,7 +33,6 @@ type Collector struct {
 
 	procsMu sync.Mutex
 	procs   []Proc
-	procN   int
 	procsAt time.Time
 	procCPU map[int]uint64
 
@@ -163,7 +162,11 @@ func (c *Collector) Collect(scope Scope) Snapshot {
 	}
 	if haveProcs {
 		wg.Add(1)
-		go func() { defer wg.Done(); s.Procs, s.ProcN = c.procList(now) }()
+		go func() {
+			defer wg.Done()
+			s.Procs = c.procList(now)
+			s.ProcN = len(s.Procs)
+		}()
 	}
 	if scope&ScopeWifi != 0 {
 		wg.Add(1)

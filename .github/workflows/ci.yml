@@ -38,6 +38,12 @@ jobs:
       - name: cross-compile
         run: make all
 
+      - name: pack binaries (upx)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y upx-ucl
+          make pack
+
       - name: upload binaries
         uses: actions/upload-artifact@v4
         with:

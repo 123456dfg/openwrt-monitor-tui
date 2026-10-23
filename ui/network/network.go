@@ -6,19 +6,73 @@ import (
 
 	"openwrt-monitor-tui/collect"
 	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/network/speedtest"
 	"openwrt-monitor-tui/ui/widgets"
+)
+
+// Sub-tabs of the Network pane, shown in a settings-style sidebar.
+const (
+	TabOverview = iota
+	TabSpeed
 )
 
 const maxAddrW = 24
 
-// Body renders the Network tab from a snapshot and its rate history.
-func Body(s collect.Snapshot, hist *Tracker, width int) []string {
+// Body merges the sidebar (overview / speed test) and the pane of the open
+// sub-tab, mirroring the settings tab layout: sidebar rows padded to
+// SidebarW, two-cell gutter, then the pane content. The sidebar marks three
+// states: the entered sub-tab (solid triangle), the preselected one (dim dot,
+// not entered yet) and the untouched row (no marker).
+func Body(s collect.Snapshot, hist *Tracker, width, sel, open int, active bool, speed speedtest.State) []string {
+	if sel < TabOverview || sel > TabSpeed {
+		sel = TabOverview
+	}
+	if open < TabOverview || open > TabSpeed {
+		open = TabOverview
+	}
+
+	names := []string{kit.Tr.NetTabOverview, kit.Tr.NetTabSpeed}
+	side := make([]string, 0, len(names))
+	for i, n := range names {
+		switch {
+		case i == open && active:
+			side = append(side, " "+kit.Accent.Render(kit.Glyph.Sel+" "+n))
+		case i == sel:
+			side = append(side, " "+kit.Dim.Render(kit.Glyph.Dot+" "+n))
+		default:
+			side = append(side, "  "+kit.Label.Render(n))
+		}
+	}
+
+	var content []string
+	if open == TabSpeed {
+		content = speedtest.Pane(speed)
+	} else {
+		content = overview(s, hist, width)
+	}
+
+	out := make([]string, max(len(side), len(content)))
+	for i := range out {
+		var left, right string
+		if i < len(side) {
+			left = side[i]
+		}
+		if i < len(content) {
+			right = content[i]
+		}
+		out[i] = strings.TrimRight(kit.PadRight(left, kit.SidebarW)+"  "+right, " ")
+	}
+	return out
+}
+
+// overview is the interface table and the traffic totals.
+func overview(s collect.Snapshot, hist *Tracker, width int) []string {
 	addrW := min(maxAddrW, max(10, width-53-chartGap))
 	head := kit.PadRight(kit.Tr.Iface, 10) + " " + kit.PadRight(kit.Tr.State, 5) + " " +
 		kit.PadRight(kit.Tr.Address, addrW) + " " + kit.PadLeft(kit.Tr.RxRate, 10) + " " +
 		kit.PadLeft(kit.Tr.TxRate, 10) + strings.Repeat(" ", chartGap) +
 		kit.PadLeft(kit.Tr.Traffic, chartW)
-	out := []string{"", "  " + kit.Label.Render(head)}
+	out := []string{"  " + kit.Label.Render(head)}
 	if len(s.Ifaces) == 0 {
 		out = append(out, "  "+kit.Dim.Render(kit.Tr.NoIfaces))
 	}

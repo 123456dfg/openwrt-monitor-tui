@@ -7,7 +7,7 @@ import (
 
 	"openwrt-monitor-tui/collect"
 	"openwrt-monitor-tui/ui/kit"
-	"openwrt-monitor-tui/ui/widgets"
+	"openwrt-monitor-tui/ui/widgets/components"
 )
 
 // Schedule kinds, in the order the picker lists them. KindCustom keeps an
@@ -34,10 +34,10 @@ const (
 // Form is the new/edited crontab entry. EditLine is the raw crontab line being
 // replaced, or -1 when the form describes a new job.
 type Form struct {
-	Kind    widgets.Select // options are the localized kind labels
-	When    widgets.Input  // "5", "08:30", or a raw expression for KindCustom
-	Weekday widgets.Select // Sunday-based, the same numbering cron uses
-	Command widgets.Input
+	Kind    components.Select // options are the localized kind labels
+	When    components.Input  // "5", "08:30", or a raw expression for KindCustom
+	Weekday components.Select // Sunday-based, the same numbering cron uses
+	Command components.Input
 
 	EditLine int
 
@@ -52,10 +52,10 @@ type Form struct {
 func NewForm() Form {
 	return Form{
 		EditLine: -1,
-		Kind:     widgets.NewSelect(kit.Tr.CronKinds[:], kit.Tr.CronKinds[KindMinutes]),
-		When:     widgets.NewInput("", 64),
-		Weekday:  widgets.NewSelect(kit.Tr.CronDays[:], kit.Tr.CronDays[0]),
-		Command:  widgets.NewInput("", 200),
+		Kind:     components.NewSelect(kit.Tr.CronKinds[:], kit.Tr.CronKinds[KindMinutes]),
+		When:     components.NewInput("", 64),
+		Weekday:  components.NewSelect(kit.Tr.CronDays[:], kit.Tr.CronDays[0]),
+		Command:  components.NewInput("", 200),
 	}
 }
 
@@ -254,7 +254,7 @@ func (f Form) Origin() string {
 }
 
 // Text is the input widget of the focused row, or nil.
-func (f *Form) Text() *widgets.Input {
+func (f *Form) Text() *components.Input {
 	switch f.Focus {
 	case FocusWhen:
 		return &f.When
@@ -265,7 +265,7 @@ func (f *Form) Text() *widgets.Input {
 }
 
 // Picker is the select widget of the focused row, or nil.
-func (f *Form) Picker() *widgets.Select {
+func (f *Form) Picker() *components.Select {
 	switch f.Focus {
 	case FocusKind:
 		return &f.Kind
@@ -276,8 +276,8 @@ func (f *Form) Picker() *widgets.Select {
 }
 
 // Buttons describes the action row for the shared button widget.
-func (f Form) Buttons() widgets.Buttons {
-	return widgets.Buttons{
+func (f Form) Buttons() components.Buttons {
+	return components.Buttons{
 		Labels:    [2]string{kit.Tr.Apply, kit.Tr.Cancel},
 		Focus:     buttonIndex(f.Focus),
 		Busy:      f.Busy,

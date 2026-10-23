@@ -1,11 +1,9 @@
 package cron
 
 import (
-	"github.com/charmbracelet/lipgloss"
-
 	"openwrt-monitor-tui/collect"
 	"openwrt-monitor-tui/ui/kit"
-	"openwrt-monitor-tui/ui/widgets"
+	"openwrt-monitor-tui/ui/widgets/components"
 )
 
 // Sub-tabs of the cron pane.
@@ -76,22 +74,8 @@ func strip(st State) string {
 	if cur < TabList || cur > TabEditor {
 		cur = TabList
 	}
-	line := ""
-	for i, name := range tabs(st) {
-		if i > 0 {
-			line += "   "
-		}
-		if i == cur {
-			if kit.ColorOn() {
-				line += kit.Accent.Render(name)
-			} else {
-				line += "[" + name + "]"
-			}
-			continue
-		}
-		line += kit.Label.Render(name)
-	}
-	return line
+	names := tabs(st)
+	return components.Tabs{Names: names[:], Cur: cur}.View()
 }
 
 func tabs(st State) [2]string {
@@ -102,16 +86,27 @@ func tabs(st State) [2]string {
 	return [2]string{kit.Tr.CronTabList, editor}
 }
 
-// TabHits returns the clickable x range of both sub-tabs.
-func TabHits(st State) [2][2]int {
-	var hits [2][2]int
-	x := kit.SidebarW + 4 // sidebar + pane indent
-	for i, name := range tabs(st) {
-		w := lipgloss.Width(name)
-		hits[i] = [2]int{x, x + w - 1}
-		x += w + 3
+// TabClick maps a press on the strip (x in pane-content coordinates) to a
+// sub-tab index; -1 when nothing was hit.
+func TabClick(st State, x int) int {
+	cur := st.Tab
+	if cur < TabList || cur > TabEditor {
+		cur = TabList
 	}
-	return hits
+	names := tabs(st)
+	return components.Tabs{Names: names[:], Cur: cur}.Click(kit.SidebarW+4, x)
+}
+
+// TabHits returns the clickable x range of both sub-tabs (layout helper for
+// tests; clicks go through TabClick).
+func TabHits(st State) [][2]int {
+	cur := st.Tab
+	if cur < TabList || cur > TabEditor {
+		cur = TabList
+	}
+	names := tabs(st)
+	// Sidebar width + pane indent + the strip's own two-space prefix.
+	return components.Tabs{Names: names[:], Cur: cur}.Hits(kit.SidebarW + 4)
 }
 
 func list(st State) []string {
@@ -125,7 +120,7 @@ func list(st State) []string {
 	for i, job := range st.Jobs {
 		// Only the command and its switch are shown; the schedule lives
 		// behind Enter.
-		check := widgets.Checkbox{On: job.Enabled}.String()
+		check := components.Checkbox{On: job.Enabled}.String()
 		if st.Active && i == st.Cursor {
 			out = append(out, "  "+kit.Glyph.Sel+" "+kit.Accent.Render(check+" "+job.Command))
 			continue
@@ -135,9 +130,8 @@ func list(st State) []string {
 	return out
 }
 
-// CheckHits is the x range of the switch inside a job row, relative to the
-// start of the pane content.
-func CheckHits() [2]int { return [2]int{4, 6} }
+// The job switch is a components.Checkbox drawn at columns 4..6 of the row;
+// the component resolves the press, the pane persists the flip.
 
 func rows(st State) []string {
 	f := st.Form

@@ -5,7 +5,7 @@ import (
 
 	"openwrt-monitor-tui/collect"
 	"openwrt-monitor-tui/ui/kit"
-	"openwrt-monitor-tui/ui/widgets"
+	"openwrt-monitor-tui/ui/widgets/components"
 )
 
 // lineLimit caps one command; rc.local is a boot script, not a buffer.
@@ -34,7 +34,7 @@ type Form struct {
 	Editing bool
 	Busy    bool
 
-	edit    widgets.Input
+	edit    components.Input
 	editIdx int // entry index being edited
 }
 
@@ -154,7 +154,7 @@ func (f *Form) Begin(task int) bool {
 	if i < 0 {
 		return false
 	}
-	f.edit = widgets.NewInput(f.Entries[i].Text, lineLimit)
+	f.edit = components.NewInput(f.Entries[i].Text, lineLimit)
 	f.edit.Begin()
 	f.editIdx = i
 	f.Editing = true
@@ -213,7 +213,7 @@ func (f *Form) Delete(task int) {
 }
 
 // Edit is the input owned by the task being edited.
-func (f *Form) Edit() *widgets.Input { return &f.edit }
+func (f *Form) Edit() *components.Input { return &f.edit }
 
 // EditIndex is the entry currently being edited.
 func (f Form) EditIndex() int { return f.editIdx }
@@ -235,8 +235,8 @@ func (f Form) Body() string {
 }
 
 // Buttons describes the action row for the shared button widget.
-func (f Form) Buttons() widgets.Buttons {
-	return widgets.Buttons{
+func (f Form) Buttons() components.Buttons {
+	return components.Buttons{
 		Labels:    [2]string{kit.Tr.Apply, kit.Tr.Cancel},
 		Focus:     buttonIndex(f),
 		Busy:      f.Busy,

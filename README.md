@@ -7,8 +7,8 @@
 ## 主要功能
 
 - **Status**：主机名、型号、内核、在线时间、负载，CPU 占用与频率、内存、交换（未配置时不显示）、温度、磁盘用量；CPU/内存/交换各带一条历史曲线。
-- **Network**：接口状态、IP、实时收/发速率、累计流量，每个接口带一条流量曲线。
-- **Processes**：按内存排序的前 12 个进程，附 CPU 占用率。
+- **Processes**：进程列表，按内存或 CPU% 排序（默认降序，表头可点击），显示前 12 个。
+- **Network**：接口状态、IP、实时收/发速率、累计流量，每个接口带一条流量曲线；测速子页签基于 speedtest-go 实现 Speedtest.net 协议，实时显示上下行，无需外部工具。
 - **Settings**：左侧子页签，键盘和鼠标都能操作。
   - **Wi-Fi**：开关、SSID、密码、信道、加密方式，按 2.4G/5G 分页；Apply 写入 UCI 并 reload。
   - **定时任务**：列出、新增、修改任务，支持启停和“每 N 分钟 / 每 N 小时 / 每天 / 每周 / 自定义”触发。
@@ -24,6 +24,8 @@
 
 ```sh
 make all          # dist/openwrt-monitor-tui-{mipsle,mips,386,amd64}
+make pack         # UPX 压缩 dist 下的产物（约省 60% 体积，需安装 upx）
+make release      # all + pack，CI/tag 发布用
 make mipsle       # 只编一个目标
 make host         # 本机调试
 make vet test

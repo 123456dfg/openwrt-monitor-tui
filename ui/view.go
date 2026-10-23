@@ -7,8 +7,10 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/network"
 	"openwrt-monitor-tui/ui/settings"
 	"openwrt-monitor-tui/ui/settings/cron"
+	"openwrt-monitor-tui/ui/widgets/components"
 )
 
 func (m model) View() string {
@@ -40,6 +42,17 @@ func (m model) View() string {
 	}
 
 	hint := kit.Tr.HintScroll
+	if m.tab == 1 {
+		switch {
+		case !m.netActive:
+			hint = kit.Tr.HintSidebar
+		case m.netOpen == network.TabSpeed:
+			hint = kit.Tr.HintSpeed
+		}
+	}
+	if m.tab == 2 {
+		hint = kit.Tr.HintProcs
+	}
 	if m.tab == tabSettings {
 		switch {
 		case !m.subActive:
@@ -99,22 +112,7 @@ func (m model) topBar() string {
 }
 
 func (m model) tabBar() string {
-	var b strings.Builder
-	for i, n := range tabNames() {
-		if i > 0 {
-			b.WriteString("   ")
-		}
-		if i == m.tab {
-			if kit.ColorOn() {
-				b.WriteString(kit.Accent.Render(n))
-			} else {
-				b.WriteString("[" + n + "]")
-			}
-			continue
-		}
-		b.WriteString(kit.Label.Render(n))
-	}
-	return b.String()
+	return components.Tabs{Names: tabNames(), Cur: m.tab}.View()
 }
 
 // fit truncates a styled line to w cells without cutting escape sequences.
