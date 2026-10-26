@@ -1,14 +1,8 @@
-// Package i18n owns every piece of user-visible text and the language
-// selection behind it. It is a separate package so the string tables can be
-// split per language without dragging the style helpers along; the kit package
-// re-exports the entry points.
-package i18n
+// Package table holds the Strings schema shared by every language table.
+// It lives below the language packages so en/ and zh/ can define their tables
+// without importing (and being imported by) the i18n core.
+package table
 
-import "strings"
-
-// Strings is every piece of text the interface shows. Keeping it a struct
-// instead of a map means a missing translation is a compile error, not a blank
-// label at runtime. Values with verbs are used with fmt.Sprintf.
 type Strings struct {
 	Tabs [4]string
 
@@ -38,12 +32,15 @@ type Strings struct {
 	TotalTraffic                          string
 	Traffic                               string
 
-	NetTabOverview, NetTabSpeed string // network sidebar: overview / speed test
-	HintSpeed                   string
+	NetTabOverview, NetTabSpeed, NetTabPorts string // network sidebar: overview / speed test / ports
+	HintSpeed, HintPorts                     string
 
 	SpeedStart, SpeedRunning, SpeedTool string
 	SpeedServer                         string
 	SpeedDown, SpeedUp, SpeedErr        string
+
+	PortStart, PortRunning, PortProbed string
+	PortSummary, PortNone              string
 
 	PID, CPUPct, RSS, Command string
 	NoProcs                   string
@@ -93,81 +90,4 @@ type Strings struct {
 	SysPoweroff, SysPoweroffDesc    string
 	SysFactory, SysFactoryDesc      string
 	SysConfirm, SysRunning, SysDone string
-}
-
-// Tr is the active translation. It is a pointer that kit shares: the setters
-// below replace the pointed-to value rather than the pointer, so every reader
-// sees the new language without any re-export step.
-var Tr = new(Strings)
-
-func init() { *Tr = en }
-
-// langPick is what the user asked for (auto/en/zh), langAuto is what auto
-// resolved to at startup. They are separate so switching to "auto" in the
-// settings tab never has to hit the network again.
-var (
-	langPick     = "auto"
-	langAutoPick = "en"
-)
-
-// SetLang is the startup entry point: "auto" asks an IP geolocation service
-// which country the public address belongs to, falling back to the locale
-// variables when the lookup fails or the router is offline.
-func SetLang(name string) {
-	langPick = normalizeLang(name)
-	if langPick == "auto" {
-		langAutoPick = autoLangCode()
-	}
-	apply()
-}
-
-// SetLangChoice switches language at runtime without any network access.
-func SetLangChoice(name string) {
-	langPick = normalizeLang(name)
-	apply()
-}
-
-// apply swaps the active strings in place, through the shared pointer.
-func apply() { *Tr = stringsFor(resolveLang()) }
-
-// LangChoice is the index into langChoices of the current pick.
-func LangChoice() int {
-	for i, c := range langChoices {
-		if c == langPick {
-			return i
-		}
-	}
-	return 0
-}
-
-// LangCode is the language actually in effect ("en" or "zh").
-func LangCode() string { return resolveLang() }
-
-// LangAutoCode is what "auto" resolved to at startup.
-func LangAutoCode() string { return langAutoPick }
-
-var langChoices = []string{"auto", "en", "zh"}
-
-func resolveLang() string {
-	if langPick == "auto" {
-		return langAutoPick
-	}
-	return langPick
-}
-
-func stringsFor(code string) Strings {
-	if code == "zh" {
-		return zh
-	}
-	return en
-}
-
-func normalizeLang(name string) string {
-	switch strings.ToLower(strings.TrimSpace(name)) {
-	case "zh", "zh-cn", "zh_cn", "cn", "chinese":
-		return "zh"
-	case "en", "english":
-		return "en"
-	}
-	return "auto"
 }

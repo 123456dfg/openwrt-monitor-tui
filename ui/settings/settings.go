@@ -3,12 +3,12 @@ package settings
 import (
 	"strings"
 
-	"openwrt-monitor-tui/ui/kit"
 	"openwrt-monitor-tui/ui/settings/cron"
 	"openwrt-monitor-tui/ui/settings/language"
 	"openwrt-monitor-tui/ui/settings/startup"
 	"openwrt-monitor-tui/ui/settings/system"
 	"openwrt-monitor-tui/ui/settings/wifi"
+	"openwrt-monitor-tui/ui/style"
 )
 
 type Section int
@@ -34,13 +34,13 @@ func Sections(wifiSupported bool) []Section {
 func Name(s Section) string {
 	switch s {
 	case Cron:
-		return kit.Tr.Cron
+		return style.Tr.Cron
 	case Startup:
-		return kit.Tr.Startup
+		return style.Tr.Startup
 	case System:
-		return kit.Tr.System
+		return style.Tr.System
 	case Language:
-		return kit.Tr.Language
+		return style.Tr.Language
 	}
 	return "Wi-Fi"
 }
@@ -70,10 +70,10 @@ func Body(st State) []string {
 	side := make([]string, 0, len(subs))
 	for i, sec := range subs {
 		if i == cur {
-			side = append(side, " "+kit.Accent.Render(kit.Glyph.Sel+" "+Name(sec)))
+			side = append(side, " "+style.Accent.Render(style.Glyph.Sel+" "+Name(sec)))
 			continue
 		}
-		side = append(side, "  "+kit.Label.Render(Name(sec)))
+		side = append(side, "  "+style.Label.Render(Name(sec)))
 	}
 
 	var content []string
@@ -99,7 +99,7 @@ func Body(st State) []string {
 		if i < len(content) {
 			right = content[i]
 		}
-		out[i] = strings.TrimRight(kit.PadRight(left, kit.SidebarW)+"  "+right, " ")
+		out[i] = strings.TrimRight(style.PadRight(left, style.SidebarW)+"  "+right, " ")
 	}
 	return out
 }

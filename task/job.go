@@ -48,6 +48,15 @@ func (j *Job[T]) Ready() bool {
 	return j.have
 }
 
+// Peek returns the last published value without starting a run. Unlike Get it
+// never triggers the producer — for jobs that must start only on an explicit
+// user action.
+func (j *Job[T]) Peek() (T, bool) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.value, j.have
+}
+
 // Reload runs the producer now and publishes the result. Call it from a
 // tea.Cmd goroutine (not the UI loop); it supersedes any older background run.
 func (j *Job[T]) Reload() T {

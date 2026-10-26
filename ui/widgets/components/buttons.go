@@ -5,7 +5,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 )
 
 // Buttons is a row of one or two actions, focusable with the keyboard and
@@ -50,10 +50,10 @@ func (b Buttons) View() string {
 		first = false
 		label := "[ " + b.label(i) + " ]"
 		if i == b.Focus {
-			out.WriteString(kit.Glyph.Sel + " " + kit.Accent.Render(label))
+			out.WriteString(style.Glyph.Sel + " " + style.Accent.Render(label))
 			continue
 		}
-		out.WriteString("  " + kit.Label.Render(label))
+		out.WriteString("  " + style.Label.Render(label))
 	}
 	return out.String()
 }

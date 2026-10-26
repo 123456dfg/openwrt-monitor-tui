@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 )
 
 func TestTabsView(t *testing.T) {
@@ -23,8 +23,8 @@ func TestTabsView(t *testing.T) {
 
 // Without colours the active tab is bracketed and the hits grow with it.
 func TestTabsHitsNoColor(t *testing.T) {
-	kit.SetColor(false)
-	t.Cleanup(func() { kit.SetColor(true) })
+	style.SetColor(false)
+	t.Cleanup(func() { style.SetColor(true) })
 
 	tabs := Tabs{Names: []string{"AB", "CDEF"}, Cur: 1}
 	hits := tabs.Hits(2)

@@ -1,6 +1,6 @@
 package widgets
 
-import "openwrt-monitor-tui/ui/kit"
+import "openwrt-monitor-tui/ui/style"
 
 // Chart draws a series as a braille curve of w cells, newest on the right. A
 // missing or zero sample sits on the baseline. In ASCII mode it falls back to
@@ -9,7 +9,7 @@ func Chart(values []float64, w int) string {
 	if w <= 0 {
 		return ""
 	}
-	if kit.ASCII() {
+	if style.ASCII() {
 		return Spark(values, w)
 	}
 	const rows = 4
@@ -75,7 +75,7 @@ func Chart(values []float64, w int) string {
 // Spark is the ASCII/no-braille fallback: one character per sample, scaled to
 // the series maximum.
 func Spark(values []float64, w int) string {
-	levels := []rune(kit.Glyph.Spark)
+	levels := []rune(style.Glyph.Spark)
 	out := make([]rune, w)
 	for i := range out {
 		out[i] = levels[0]

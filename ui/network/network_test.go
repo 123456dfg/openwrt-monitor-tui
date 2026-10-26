@@ -1,6 +1,7 @@
 package network
 
 import (
+	"openwrt-monitor-tui/ui/i18n"
 	"strings"
 	"testing"
 	"time"
@@ -8,12 +9,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"openwrt-monitor-tui/collect"
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/network/portscan"
 	"openwrt-monitor-tui/ui/network/speedtest"
+	"openwrt-monitor-tui/ui/style"
 )
 
 func TestTracker(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	tr := NewTracker()
 	for i := 0; i < 20; i++ {
 		tr.Add([]collect.Iface{{Name: "wan", RxRate: float64(i * 10), TxRate: 5}})
@@ -30,12 +32,12 @@ func TestTracker(t *testing.T) {
 }
 
 func TestBodySpacing(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	s := collect.Snapshot{At: time.Now(), Ifaces: []collect.Iface{
 		{Name: "br-lan", Up: true, Addrs: []string{"192.168.1.1"}},
 		{Name: "wan", Up: true, Addrs: []string{"10.0.0.2"}},
 	}}
-	body := strings.Join(Body(s, NewTracker(), 80, TabOverview, TabOverview, true, speedtest.New()), "\n")
+	body := strings.Join(Body(s, NewTracker(), 80, TabOverview, TabOverview, true, speedtest.New(), portscan.New()), "\n")
 	if !strings.Contains(body, "br-lan") || !strings.Contains(body, "wan") {
 		t.Fatal("interfaces missing")
 	}
@@ -43,21 +45,28 @@ func TestBodySpacing(t *testing.T) {
 	if !strings.Contains(body, "Overview") || !strings.Contains(body, "Speed test") {
 		t.Fatalf("sidebar missing:\n%s", body)
 	}
-	// One blank line between the interface rows: find a blank line whose
-	// next non-empty line is the wan row.
+	// One separator line between the interface rows (in the two-column join
+	// the blank content row coincides with a sidebar row, so the separator
+	// line carries only sidebar text).
 	lines := strings.Split(body, "\n")
+	br := -1
 	for i, ln := range lines {
-		if i > 0 && strings.TrimSpace(ln) == "" && i+1 < len(lines) &&
-			strings.HasPrefix(strings.TrimSpace(lines[i+1]), "wan ") {
-			return
+		if strings.Contains(strings.TrimSpace(ln), "br-lan ") {
+			br = i
+			break
 		}
 	}
-	t.Fatalf("no blank line between interfaces:\n%s", body)
+	if br < 0 {
+		t.Fatalf("br-lan row missing:\n%s", body)
+	}
+	if !strings.Contains(strings.TrimSpace(lines[br+2]), "wan ") {
+		t.Fatalf("expected one separator line before the wan row:\n%s", body)
+	}
 }
 
 func TestBodySpeedPane(t *testing.T) {
-	kit.SetLang("en")
-	body := strings.Join(Body(collect.Snapshot{}, NewTracker(), 80, TabSpeed, TabSpeed, true, speedtest.New()), "\n")
+	i18n.SetLang("en")
+	body := strings.Join(Body(collect.Snapshot{}, NewTracker(), 80, TabSpeed, TabSpeed, true, speedtest.New(), portscan.New()), "\n")
 	if !strings.Contains(body, "Start") {
 		t.Fatalf("start button missing:\n%s", body)
 	}
@@ -66,28 +75,28 @@ func TestBodySpeedPane(t *testing.T) {
 // The sidebar marks three states: entered (solid triangle), preselected but
 // not entered (dim dot) and untouched (no marker).
 func TestSidebarEnterMarker(t *testing.T) {
-	kit.SetLang("en")
-	t.Cleanup(func() { kit.SetUnicode() })
-	kit.SetUnicode()
+	i18n.SetLang("en")
+	t.Cleanup(func() { style.SetUnicode() })
+	style.SetUnicode()
 
-	entered := strings.Join(Body(collect.Snapshot{}, NewTracker(), 80, TabSpeed, TabSpeed, true, speedtest.New()), "\n")
-	if !strings.Contains(entered, kit.Glyph.Sel+" Speed test") {
+	entered := strings.Join(Body(collect.Snapshot{}, NewTracker(), 80, TabSpeed, TabSpeed, true, speedtest.New(), portscan.New()), "\n")
+	if !strings.Contains(entered, style.Glyph.Sel+" Speed test") {
 		t.Fatalf("entered marker missing:\n%s", entered)
 	}
-	if strings.Contains(entered, kit.Glyph.Dot+" Speed test") {
+	if strings.Contains(entered, style.Glyph.Dot+" Speed test") {
 		t.Fatalf("entered row still shows the preview dot:\n%s", entered)
 	}
 
-	preview := strings.Join(Body(collect.Snapshot{}, NewTracker(), 80, TabSpeed, TabSpeed, false, speedtest.New()), "\n")
-	if !strings.Contains(preview, kit.Glyph.Dot+" Speed test") {
+	preview := strings.Join(Body(collect.Snapshot{}, NewTracker(), 80, TabSpeed, TabSpeed, false, speedtest.New(), portscan.New()), "\n")
+	if !strings.Contains(preview, style.Glyph.Dot+" Speed test") {
 		t.Fatalf("preview dot missing:\n%s", preview)
 	}
-	if strings.Contains(preview, kit.Glyph.Sel) {
+	if strings.Contains(preview, style.Glyph.Sel) {
 		t.Fatalf("preview row shows the entered triangle:\n%s", preview)
 	}
 
-	idle := strings.Join(Body(collect.Snapshot{}, NewTracker(), 80, TabOverview, TabOverview, false, speedtest.New()), "\n")
-	if strings.Contains(idle, kit.Glyph.Sel+" Speed test") || strings.Contains(idle, kit.Glyph.Dot+" Speed test") {
+	idle := strings.Join(Body(collect.Snapshot{}, NewTracker(), 80, TabOverview, TabOverview, false, speedtest.New(), portscan.New()), "\n")
+	if strings.Contains(idle, style.Glyph.Sel+" Speed test") || strings.Contains(idle, style.Glyph.Dot+" Speed test") {
 		t.Fatalf("unselected speed row carries a marker:\n%s", idle)
 	}
 }

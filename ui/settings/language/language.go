@@ -1,7 +1,8 @@
 package language
 
 import (
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/i18n"
+	"openwrt-monitor-tui/ui/style"
 	"openwrt-monitor-tui/ui/widgets/components"
 )
 
@@ -10,7 +11,7 @@ var Choices = []string{"auto", "en", "zh"}
 
 func Options() []string {
 	return []string{
-		kit.Tr.Auto + " (" + langName(kit.LangAutoCode()) + ")",
+		style.Tr.Auto + " (" + langName(i18n.LangAutoCode()) + ")",
 		"English",
 		"中文",
 	}

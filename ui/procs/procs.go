@@ -5,7 +5,7 @@ import (
 	"slices"
 
 	"openwrt-monitor-tui/collect"
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 )
 
 // Sort picks which column the process table is ranked by.
@@ -91,17 +91,17 @@ func cmpFloat(a, b float64) int {
 // capped, so rendering never pays for sorting. by/desc only drive the header
 // arrows.
 func Body(rows []collect.Proc, total int, by Sort, desc bool) []string {
-	head := kit.PadRight(kit.Tr.PID, 7) + " " + kit.PadLeft(mark(kit.Tr.CPUPct, by == ByCPU, desc), 6) + " " +
-		kit.PadLeft(mark(kit.Tr.RSS, by == ByMem, desc), 10) + "   " + kit.Tr.Command
-	out := []string{"", "  " + kit.Label.Render(head)}
+	head := style.PadRight(style.Tr.PID, 7) + " " + style.PadLeft(mark(style.Tr.CPUPct, by == ByCPU, desc), 6) + " " +
+		style.PadLeft(mark(style.Tr.RSS, by == ByMem, desc), 10) + "   " + style.Tr.Command
+	out := []string{"", "  " + style.Label.Render(head)}
 	if len(rows) == 0 {
-		out = append(out, "  "+kit.Dim.Render(kit.Tr.NoProcs))
+		out = append(out, "  "+style.Dim.Render(style.Tr.NoProcs))
 	}
 	for _, p := range rows {
 		out = append(out, fmt.Sprintf("  %-7d %5.1f%% %10s   %s",
-			p.PID, p.CPU, kit.HumanBytes(p.RSS), p.Name))
+			p.PID, p.CPU, style.HumanBytes(p.RSS), p.Name))
 	}
-	out = append(out, "", "  "+kit.Dim.Render(fmt.Sprintf(kit.Tr.ProcSummary, total, len(rows))))
+	out = append(out, "", "  "+style.Dim.Render(fmt.Sprintf(style.Tr.ProcSummary, total, len(rows))))
 	return out
 }
 
@@ -112,7 +112,7 @@ func mark(label string, active, desc bool) string {
 	if !active {
 		return label
 	}
-	if kit.ASCII() {
+	if style.ASCII() {
 		if desc {
 			return label + "v"
 		}

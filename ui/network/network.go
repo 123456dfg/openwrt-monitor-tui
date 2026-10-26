@@ -5,8 +5,9 @@ import (
 	"strings"
 
 	"openwrt-monitor-tui/collect"
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/network/portscan"
 	"openwrt-monitor-tui/ui/network/speedtest"
+	"openwrt-monitor-tui/ui/style"
 	"openwrt-monitor-tui/ui/widgets"
 )
 
@@ -14,40 +15,44 @@ import (
 const (
 	TabOverview = iota
 	TabSpeed
+	TabPorts
 )
 
 const maxAddrW = 24
 
-// Body merges the sidebar (overview / speed test) and the pane of the open
-// sub-tab, mirroring the settings tab layout: sidebar rows padded to
+// Body merges the sidebar (overview / speed test / ports) and the pane of the
+// open sub-tab, mirroring the settings tab layout: sidebar rows padded to
 // SidebarW, two-cell gutter, then the pane content. The sidebar marks three
 // states: the entered sub-tab (solid triangle), the preselected one (dim dot,
 // not entered yet) and the untouched row (no marker).
-func Body(s collect.Snapshot, hist *Tracker, width, sel, open int, active bool, speed speedtest.State) []string {
-	if sel < TabOverview || sel > TabSpeed {
+func Body(s collect.Snapshot, hist *Tracker, width, sel, open int, active bool, speed speedtest.State, ports portscan.State) []string {
+	if sel < TabOverview || sel > TabPorts {
 		sel = TabOverview
 	}
-	if open < TabOverview || open > TabSpeed {
+	if open < TabOverview || open > TabPorts {
 		open = TabOverview
 	}
 
-	names := []string{kit.Tr.NetTabOverview, kit.Tr.NetTabSpeed}
+	names := []string{style.Tr.NetTabOverview, style.Tr.NetTabSpeed, style.Tr.NetTabPorts}
 	side := make([]string, 0, len(names))
 	for i, n := range names {
 		switch {
 		case i == open && active:
-			side = append(side, " "+kit.Accent.Render(kit.Glyph.Sel+" "+n))
+			side = append(side, " "+style.Accent.Render(style.Glyph.Sel+" "+n))
 		case i == sel:
-			side = append(side, " "+kit.Dim.Render(kit.Glyph.Dot+" "+n))
+			side = append(side, " "+style.Dim.Render(style.Glyph.Dot+" "+n))
 		default:
-			side = append(side, "  "+kit.Label.Render(n))
+			side = append(side, "  "+style.Label.Render(n))
 		}
 	}
 
 	var content []string
-	if open == TabSpeed {
+	switch open {
+	case TabSpeed:
 		content = speedtest.Pane(speed)
-	} else {
+	case TabPorts:
+		content = portscan.Pane(ports)
+	default:
 		content = overview(s, hist, width)
 	}
 
@@ -60,7 +65,7 @@ func Body(s collect.Snapshot, hist *Tracker, width, sel, open int, active bool, 
 		if i < len(content) {
 			right = content[i]
 		}
-		out[i] = strings.TrimRight(kit.PadRight(left, kit.SidebarW)+"  "+right, " ")
+		out[i] = strings.TrimRight(style.PadRight(left, style.SidebarW)+"  "+right, " ")
 	}
 	return out
 }
@@ -68,13 +73,13 @@ func Body(s collect.Snapshot, hist *Tracker, width, sel, open int, active bool, 
 // overview is the interface table and the traffic totals.
 func overview(s collect.Snapshot, hist *Tracker, width int) []string {
 	addrW := min(maxAddrW, max(10, width-53-chartGap))
-	head := kit.PadRight(kit.Tr.Iface, 10) + " " + kit.PadRight(kit.Tr.State, 5) + " " +
-		kit.PadRight(kit.Tr.Address, addrW) + " " + kit.PadLeft(kit.Tr.RxRate, 10) + " " +
-		kit.PadLeft(kit.Tr.TxRate, 10) + strings.Repeat(" ", chartGap) +
-		kit.PadLeft(kit.Tr.Traffic, chartW)
-	out := []string{"  " + kit.Label.Render(head)}
+	head := style.PadRight(style.Tr.Iface, 10) + " " + style.PadRight(style.Tr.State, 5) + " " +
+		style.PadRight(style.Tr.Address, addrW) + " " + style.PadLeft(style.Tr.RxRate, 10) + " " +
+		style.PadLeft(style.Tr.TxRate, 10) + strings.Repeat(" ", chartGap) +
+		style.PadLeft(style.Tr.Traffic, chartW)
+	out := []string{"  " + style.Label.Render(head)}
 	if len(s.Ifaces) == 0 {
-		out = append(out, "  "+kit.Dim.Render(kit.Tr.NoIfaces))
+		out = append(out, "  "+style.Dim.Render(style.Tr.NoIfaces))
 	}
 	for i, in := range s.Ifaces {
 		if i > 0 {
@@ -82,18 +87,18 @@ func overview(s collect.Snapshot, hist *Tracker, width int) []string {
 			// rounded up to the smallest gap a terminal can draw.
 			out = append(out, "")
 		}
-		state := kit.Tr.Down
+		state := style.Tr.Down
 		if in.Up {
-			state = kit.Tr.Up
+			state = style.Tr.Up
 		}
-		out = append(out, "  "+kit.PadRight(in.Name, 10)+" "+kit.PadRight(state, 5)+" "+
+		out = append(out, "  "+style.PadRight(in.Name, 10)+" "+style.PadRight(state, 5)+" "+
 			cell(preferredAddr(in.Addrs), addrW)+" "+
-			kit.PadLeft(rateStr(in.RxRate), 10)+" "+kit.PadLeft(rateStr(in.TxRate), 10)+
+			style.PadLeft(rateStr(in.RxRate), 10)+" "+style.PadLeft(rateStr(in.TxRate), 10)+
 			strings.Repeat(" ", chartGap)+hist.Chart(in.Name))
 	}
 	out = append(out, "")
-	out = append(out, "  "+kit.Dim.Render(fmt.Sprintf(kit.Tr.TotalTraffic,
-		kit.HumanBytes(s.TotalRx()), kit.HumanBytes(s.TotalTx()))))
+	out = append(out, "  "+style.Dim.Render(fmt.Sprintf(style.Tr.TotalTraffic,
+		style.HumanBytes(s.TotalRx()), style.HumanBytes(s.TotalTx()))))
 	return out
 }
 
@@ -101,7 +106,7 @@ func rateStr(v float64) string {
 	if v <= 0 {
 		return "-"
 	}
-	return kit.HumanBytes(uint64(v)) + "/s"
+	return style.HumanBytes(uint64(v)) + "/s"
 }
 
 // preferredAddr picks a stable address to show: global IPv4, then anything not

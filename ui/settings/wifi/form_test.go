@@ -1,10 +1,11 @@
 package wifi
 
 import (
+	"openwrt-monitor-tui/ui/i18n"
 	"testing"
 
 	"openwrt-monitor-tui/collect"
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 )
 
 func form() Form {
@@ -15,23 +16,23 @@ func form() Form {
 }
 
 func TestValidate(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	f := form()
 	if msg := f.Validate(); msg != "" {
 		t.Fatalf("unexpected error: %s", msg)
 	}
 	f.SSID.Value = ""
-	if f.Validate() != kit.Tr.ValSSIDEmpty {
+	if f.Validate() != style.Tr.ValSSIDEmpty {
 		t.Fatal("empty ssid accepted")
 	}
 	f = form()
 	f.Key.Value = "short"
-	if f.Validate() != kit.Tr.ValPassword {
+	if f.Validate() != style.Tr.ValPassword {
 		t.Fatal("short key accepted")
 	}
 	f = form()
 	f.Channel.Set("abc")
-	if f.Validate() != kit.Tr.ValChannel {
+	if f.Validate() != style.Tr.ValChannel {
 		t.Fatal("bad channel accepted")
 	}
 }
@@ -69,7 +70,7 @@ func TestChannelsAndSecurity(t *testing.T) {
 }
 
 func TestPlan(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	f := form()
 	f.Enabled.On = false
 	f.SSID.Value = "New"

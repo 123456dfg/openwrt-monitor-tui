@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"openwrt-monitor-tui/collect"
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 	"openwrt-monitor-tui/ui/widgets/components"
 )
 
@@ -52,9 +52,9 @@ type Form struct {
 func NewForm() Form {
 	return Form{
 		EditLine: -1,
-		Kind:     components.NewSelect(kit.Tr.CronKinds[:], kit.Tr.CronKinds[KindMinutes]),
+		Kind:     components.NewSelect(style.Tr.CronKinds[:], style.Tr.CronKinds[KindMinutes]),
 		When:     components.NewInput("", 64),
-		Weekday:  components.NewSelect(kit.Tr.CronDays[:], kit.Tr.CronDays[0]),
+		Weekday:  components.NewSelect(style.Tr.CronDays[:], style.Tr.CronDays[0]),
 		Command:  components.NewInput("", 200),
 	}
 }
@@ -163,11 +163,11 @@ func (f *Form) NormalizeFocus() {
 func (f Form) WhenLabel() string {
 	switch f.KindIndex() {
 	case KindDaily, KindWeekly:
-		return kit.Tr.CronAt
+		return style.Tr.CronAt
 	case KindCustom:
-		return kit.Tr.CronExpr
+		return style.Tr.CronExpr
 	}
-	return kit.Tr.CronEvery
+	return style.Tr.CronEvery
 }
 
 // WhenHint documents the expected input for the chosen kind.
@@ -189,31 +189,31 @@ func (f Form) Schedule() (string, string) {
 	case KindMinutes:
 		n, ok := number(f.When.Value, 1, 59)
 		if !ok {
-			return "", kit.Tr.ValCronRange
+			return "", style.Tr.ValCronRange
 		}
 		return fmt.Sprintf("*/%d * * * *", n), ""
 	case KindHours:
 		n, ok := number(f.When.Value, 1, 23)
 		if !ok {
-			return "", kit.Tr.ValCronRange
+			return "", style.Tr.ValCronRange
 		}
 		return fmt.Sprintf("0 */%d * * *", n), ""
 	case KindDaily:
 		h, m, ok := clock(f.When.Value)
 		if !ok {
-			return "", kit.Tr.ValCronTime
+			return "", style.Tr.ValCronTime
 		}
 		return fmt.Sprintf("%d %d * * *", m, h), ""
 	case KindWeekly:
 		h, m, ok := clock(f.When.Value)
 		if !ok {
-			return "", kit.Tr.ValCronTime
+			return "", style.Tr.ValCronTime
 		}
 		return fmt.Sprintf("%d %d * * %d", m, h, f.Weekday.Index), ""
 	}
 	expr := strings.TrimSpace(f.When.Value)
 	if len(strings.Fields(expr)) != 5 {
-		return "", kit.Tr.ValCronExpr
+		return "", style.Tr.ValCronExpr
 	}
 	return expr, ""
 }
@@ -224,7 +224,7 @@ func (f Form) Validate() string {
 	}
 	cmd := strings.TrimSpace(f.Command.Value)
 	if cmd == "" || strings.ContainsAny(cmd, "\r\n") {
-		return kit.Tr.ValCommand
+		return style.Tr.ValCommand
 	}
 	return ""
 }
@@ -278,10 +278,10 @@ func (f *Form) Picker() *components.Select {
 // Buttons describes the action row for the shared button widget.
 func (f Form) Buttons() components.Buttons {
 	return components.Buttons{
-		Labels:    [2]string{kit.Tr.Apply, kit.Tr.Cancel},
+		Labels:    [2]string{style.Tr.Apply, style.Tr.Cancel},
 		Focus:     buttonIndex(f.Focus),
 		Busy:      f.Busy,
-		BusyLabel: kit.Tr.Applying,
+		BusyLabel: style.Tr.Applying,
 	}
 }
 

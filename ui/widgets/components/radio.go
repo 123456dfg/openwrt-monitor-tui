@@ -1,6 +1,6 @@
 package components
 
-import "openwrt-monitor-tui/ui/kit"
+import "openwrt-monitor-tui/ui/style"
 
 // Radio is a single-choice list. Cursor is the highlighted row and Sel is the
 // confirmed choice, so moving the cursor previews without applying anything.
@@ -44,15 +44,15 @@ func (r *Radio) Wheel(d int) bool {
 func (r Radio) Lines(labels []string) []string {
 	out := make([]string, 0, len(labels))
 	for i, label := range labels {
-		marker, style := "  ", kit.Label
+		marker, row := "  ", style.Label
 		if i == r.Cursor {
-			marker, style = kit.Glyph.Sel+" ", kit.Accent
+			marker, row = style.Glyph.Sel+" ", style.Accent
 		}
 		box := "( )"
 		if i == r.Sel {
 			box = "(o)"
 		}
-		out = append(out, marker+style.Render(box+" "+label))
+		out = append(out, marker+row.Render(box+" "+label))
 	}
 	return out
 }

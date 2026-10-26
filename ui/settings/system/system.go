@@ -3,7 +3,7 @@ package system
 import (
 	"fmt"
 
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 )
 
 // Action is one entry of the system page.
@@ -19,21 +19,21 @@ const (
 func Label(a Action) string {
 	switch a {
 	case Poweroff:
-		return kit.Tr.SysPoweroff
+		return style.Tr.SysPoweroff
 	case Factory:
-		return kit.Tr.SysFactory
+		return style.Tr.SysFactory
 	}
-	return kit.Tr.SysReboot
+	return style.Tr.SysReboot
 }
 
 func Desc(a Action) string {
 	switch a {
 	case Poweroff:
-		return kit.Tr.SysPoweroffDesc
+		return style.Tr.SysPoweroffDesc
 	case Factory:
-		return kit.Tr.SysFactoryDesc
+		return style.Tr.SysFactoryDesc
 	}
-	return kit.Tr.SysRebootDesc
+	return style.Tr.SysRebootDesc
 }
 
 // State is everything the system page draws.
@@ -49,27 +49,27 @@ type State struct {
 // Pane lists the actions and reserves a line for the confirmation. Messages go
 // below it, so the row positions never shift.
 func Pane(st State) []string {
-	out := []string{"", "  " + kit.Dim.Render(kit.Tr.SysHint), ""}
+	out := []string{"", "  " + style.Dim.Render(style.Tr.SysHint), ""}
 	for i := 0; i < int(Count); i++ {
 		marker := "  "
-		style := kit.Label
+		row := style.Label
 		if st.Active && i == st.Sel {
-			marker, style = kit.Glyph.Sel+" ", kit.Accent
+			marker, row = style.Glyph.Sel+" ", style.Accent
 		}
-		line := "  " + marker + style.Render(kit.PadRight(Label(Action(i)), 14)) +
-			"  " + kit.Dim.Render(Desc(Action(i)))
+		line := "  " + marker + row.Render(style.PadRight(Label(Action(i)), 14)) +
+			"  " + style.Dim.Render(Desc(Action(i)))
 		if st.Confirm && i == st.Sel {
-			line = "  " + marker + kit.Bad.Render(kit.PadRight(Label(Action(i)), 14)) +
-				"  " + kit.Dim.Render(Desc(Action(i)))
+			line = "  " + marker + style.Bad.Render(style.PadRight(Label(Action(i)), 14)) +
+				"  " + style.Dim.Render(Desc(Action(i)))
 		}
 		out = append(out, line)
 	}
 	out = append(out, "", confirmLine(st))
 	if st.Note != "" {
-		out = append(out, "  "+kit.Good.Render(st.Note))
+		out = append(out, "  "+style.Good.Render(st.Note))
 	}
 	if st.Err != "" {
-		out = append(out, "  "+kit.Bad.Render(st.Err))
+		out = append(out, "  "+style.Bad.Render(st.Err))
 	}
 	return out
 }
@@ -77,9 +77,9 @@ func Pane(st State) []string {
 func confirmLine(st State) string {
 	switch {
 	case st.Busy:
-		return "  " + kit.Warn.Render(kit.Tr.SysRunning)
+		return "  " + style.Warn.Render(style.Tr.SysRunning)
 	case st.Confirm:
-		return "  " + kit.Bad.Render(fmt.Sprintf(kit.Tr.SysConfirm, Label(Action(st.Sel))))
+		return "  " + style.Bad.Render(fmt.Sprintf(style.Tr.SysConfirm, Label(Action(st.Sel))))
 	}
 	return ""
 }

@@ -2,13 +2,14 @@ package ui
 
 import (
 	"openwrt-monitor-tui/collect"
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/i18n"
 	"openwrt-monitor-tui/ui/settings"
 	"openwrt-monitor-tui/ui/settings/cron"
 	"openwrt-monitor-tui/ui/settings/language"
 	"openwrt-monitor-tui/ui/settings/startup"
 	"openwrt-monitor-tui/ui/settings/system"
 	"openwrt-monitor-tui/ui/settings/wifi"
+	"openwrt-monitor-tui/ui/style"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -41,7 +42,7 @@ func (m *model) resetSettings() {
 	m.startup = startup.FromInfo(m.snap.Startup, 0)
 	m.startupNote, m.startupErr = "", ""
 	m.scroll = 0
-	m.langSel = kit.LangChoice()
+	m.langSel = i18n.LangChoice()
 	m.langFocus = m.langSel
 }
 
@@ -124,7 +125,7 @@ func (m *model) selectBand(i int) {
 		return
 	}
 	if m.form.Changed() || m.form.Editing {
-		m.formNote = kit.Tr.ApplyFirst
+		m.formNote = style.Tr.ApplyFirst
 		return
 	}
 	m.band = i
@@ -162,7 +163,7 @@ func (m *model) selectSubtab(i int) {
 	}
 	if m.subOpen == settings.Wifi &&
 		(m.form.Busy || m.form.Editing || m.form.Changed()) {
-		m.formNote = kit.Tr.ApplyFirst
+		m.formNote = style.Tr.ApplyFirst
 		return
 	}
 	m.subSel = i
@@ -261,7 +262,7 @@ func (m model) activate() (tea.Model, tea.Cmd) {
 		f.Enabled.Toggle()
 	case wifi.FocusSSID, wifi.FocusPassword:
 		if f.Iface == "" {
-			m.formNote = kit.Tr.NoAP
+			m.formNote = style.Tr.NoAP
 			return m, nil
 		}
 		f.Text().Begin()
@@ -270,7 +271,7 @@ func (m model) activate() (tea.Model, tea.Cmd) {
 		// Arrows only change a value once the row has been entered, so
 		// Enter is what turns the row into an editor.
 		if f.Focus == wifi.FocusSecurity && f.Iface == "" {
-			m.formNote = kit.Tr.NoAP
+			m.formNote = style.Tr.NoAP
 			return m, nil
 		}
 		f.Picker().Begin()
@@ -279,7 +280,7 @@ func (m model) activate() (tea.Model, tea.Cmd) {
 		return m.applyForm()
 	case wifi.FocusCancel:
 		f.Reset()
-		m.formNote = kit.Tr.Reverted
+		m.formNote = style.Tr.Reverted
 	}
 	return m, nil
 }
@@ -308,7 +309,7 @@ func (m model) applyForm() (tea.Model, tea.Cmd) {
 	}
 	sets := f.Plan()
 	if len(sets) == 0 {
-		m.formNote = kit.Tr.NoChanges
+		m.formNote = style.Tr.NoChanges
 		return m, nil
 	}
 	f.Busy = true
@@ -379,7 +380,7 @@ func (m *model) chooseLang(i int) {
 		return
 	}
 	m.langFocus, m.langSel = i, i
-	kit.SetLangChoice(language.Choices[i])
+	i18n.SetLangChoice(language.Choices[i])
 	// The cron pickers show localized labels; rebuild them for the new
 	// language. There is no unsaved job in flight when the picker is used.
 	m.cron = cron.NewForm()
@@ -532,7 +533,7 @@ func (m model) activateCron() (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		if f.EditLine >= 0 && !f.Changed() {
-			m.cronNote = kit.Tr.NoChanges
+			m.cronNote = style.Tr.NoChanges
 			return m, nil
 		}
 		sched, _ := f.Schedule()
@@ -552,7 +553,7 @@ func (m model) activateCron() (tea.Model, tea.Cmd) {
 		// Cancel ends the whole edit session, so the tab goes back to "new".
 		m.cron = cron.NewForm()
 		m.cronTab = cron.TabList
-		m.cronNote = kit.Tr.Reverted
+		m.cronNote = style.Tr.Reverted
 	}
 	return m, nil
 }
@@ -655,7 +656,7 @@ func (m model) activateStartup() (tea.Model, tea.Cmd) {
 	switch f.Focus {
 	case f.ApplyIndex():
 		if !f.Changed() {
-			m.startupNote = kit.Tr.NoChanges
+			m.startupNote = style.Tr.NoChanges
 			return m, nil
 		}
 		f.Busy = true
@@ -663,7 +664,7 @@ func (m model) activateStartup() (tea.Model, tea.Cmd) {
 		return m, func() tea.Msg { return startupApplyMsg{err: startup.Save(body)} }
 	case f.CancelIndex():
 		f.Reset()
-		m.startupNote = kit.Tr.Reverted
+		m.startupNote = style.Tr.Reverted
 	default:
 		f.Begin(f.Focus)
 	}

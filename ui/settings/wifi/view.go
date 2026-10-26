@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"openwrt-monitor-tui/collect"
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 	"openwrt-monitor-tui/ui/widgets/components"
 )
 
@@ -27,13 +27,13 @@ func Pane(st State) []string {
 		out = append(out, BandBar(st.Bands, st.Band), "")
 	}
 	if len(st.Bands) == 0 {
-		return append(out, "  "+kit.Dim.Render(kit.Tr.NoRadio))
+		return append(out, "  "+style.Dim.Render(style.Tr.NoRadio))
 	}
 	if st.Err != "" {
-		out = append(out, "  "+kit.Bad.Render(st.Err))
+		out = append(out, "  "+style.Bad.Render(st.Err))
 	}
 	if st.Note != "" {
-		out = append(out, "  "+kit.Good.Render(st.Note))
+		out = append(out, "  "+style.Good.Render(st.Note))
 	}
 	if st.Err != "" || st.Note != "" {
 		out = append(out, "")
@@ -82,11 +82,11 @@ func rows(st State) []string {
 	}
 
 	fields := [][2]string{
-		{kit.Tr.Enabled, f.Enabled.String()},
-		{kit.Tr.SSID, f.SSID.View(editing(FocusSSID))},
-		{kit.Tr.Password, pw},
-		{kit.Tr.Channel, ch},
-		{kit.Tr.Security, SecurityLabel(f.Security.Value())},
+		{style.Tr.Enabled, f.Enabled.String()},
+		{style.Tr.SSID, f.SSID.View(editing(FocusSSID))},
+		{style.Tr.Password, pw},
+		{style.Tr.Channel, ch},
+		{style.Tr.Security, SecurityLabel(f.Security.Value())},
 	}
 
 	out := make([]string, 0, len(fields)+3)
@@ -104,10 +104,10 @@ func buttonsRow(f Form, focus int) string {
 
 func actionRow(f Form, focus int) components.Buttons {
 	return components.Buttons{
-		Labels:    [2]string{kit.Tr.Apply, kit.Tr.Cancel},
+		Labels:    [2]string{style.Tr.Apply, style.Tr.Cancel},
 		Focus:     buttonIndex(focus),
 		Busy:      f.Busy,
-		BusyLabel: kit.Tr.Applying,
+		BusyLabel: style.Tr.Applying,
 	}
 }
 
@@ -127,20 +127,20 @@ func buttonIndex(focus int) int {
 
 func fieldRow(i int, f Form, focus int, name, value string) string {
 	marker := "  "
-	nameStyle, valStyle := kit.Label, kit.Style()
+	nameStyle, valStyle := style.Label, style.Style()
 	if i == focus {
-		marker, nameStyle, valStyle = kit.Glyph.Sel+" ", kit.Accent, kit.Accent
+		marker, nameStyle, valStyle = style.Glyph.Sel+" ", style.Accent, style.Accent
 	}
 	if (i == FocusSSID || i == FocusPassword || i == FocusSecurity) && f.Iface == "" {
-		nameStyle, valStyle = kit.Dim, kit.Dim
+		nameStyle, valStyle = style.Dim, style.Dim
 	}
 	editingHere := f.Editing && i == focus
 	list := i == FocusChannel || i == FocusSecurity
-	line := "  " + marker + nameStyle.Render(kit.PadRight(name, 9)) + " " + valStyle.Render(value)
+	line := "  " + marker + nameStyle.Render(style.PadRight(name, 9)) + " " + valStyle.Render(value)
 	if editingHere && list {
-		line += "   " + kit.Dim.Render("←/→")
+		line += "   " + style.Dim.Render("←/→")
 	} else if i == FocusChannel && i == focus {
-		line += "   " + kit.Dim.Render(ChannelHint(f.Band))
+		line += "   " + style.Dim.Render(ChannelHint(f.Band))
 	}
 	return line
 }
@@ -157,14 +157,14 @@ func BandBar(bands []collect.WifiBand, cur int) string {
 		}
 		label := ShortBand(band.Name)
 		if i == cur {
-			if kit.ColorOn() {
-				b.WriteString(kit.Accent.Render(label))
+			if style.ColorOn() {
+				b.WriteString(style.Accent.Render(label))
 			} else {
 				b.WriteString("[" + label + "]")
 			}
 			continue
 		}
-		b.WriteString(kit.Label.Render(label))
+		b.WriteString(style.Label.Render(label))
 	}
 	return b.String()
 }
@@ -186,11 +186,11 @@ func ShortBand(band string) string {
 // BandHits mirrors BandBar's x range for click handling.
 func BandHits(bands []collect.WifiBand, cur int) [][2]int {
 	hits := make([][2]int, 0, len(bands))
-	x := kit.SidebarW + 4
+	x := style.SidebarW + 4
 	cur = min(cur, len(bands)-1)
 	for i, band := range bands {
 		w := len(ShortBand(band.Name))
-		if i == cur && !kit.ColorOn() {
+		if i == cur && !style.ColorOn() {
 			w += 2
 		}
 		hits = append(hits, [2]int{x, x + w - 1})

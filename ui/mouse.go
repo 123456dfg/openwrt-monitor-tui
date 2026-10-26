@@ -3,8 +3,8 @@ package ui
 import (
 	tea "github.com/charmbracelet/bubbletea"
 
-	"openwrt-monitor-tui/ui/kit"
 	"openwrt-monitor-tui/ui/network"
+	"openwrt-monitor-tui/ui/network/portscan"
 	"openwrt-monitor-tui/ui/network/speedtest"
 	"openwrt-monitor-tui/ui/procs"
 	"openwrt-monitor-tui/ui/settings"
@@ -13,6 +13,7 @@ import (
 	"openwrt-monitor-tui/ui/settings/startup"
 	"openwrt-monitor-tui/ui/settings/system"
 	"openwrt-monitor-tui/ui/settings/wifi"
+	"openwrt-monitor-tui/ui/style"
 	"openwrt-monitor-tui/ui/widgets/components"
 )
 
@@ -51,10 +52,10 @@ func (m model) handleMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 			if row < 0 || row >= m.rows() {
 				break
 			}
-			if msg.X < kit.SidebarW+2 {
+			if msg.X < style.SidebarW+2 {
 				// Sidebar: a click selects and enters in one go, matching the
 				// settings tab.
-				if i := row; i >= network.TabOverview && i <= network.TabSpeed {
+				if i := row; i >= network.TabOverview && i <= network.TabPorts {
 					m.netSel, m.netOpen, m.netActive = i, i, true
 				}
 				break
@@ -64,6 +65,11 @@ func (m model) handleMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 			m.netActive = true
 			if m.netOpen == network.TabSpeed {
 				if cmd := m.clickSpeed(row); cmd != nil {
+					return m, cmd
+				}
+			}
+			if m.netOpen == network.TabPorts {
+				if cmd := m.clickPorts(row); cmd != nil {
 					return m, cmd
 				}
 			}
@@ -80,7 +86,7 @@ func (m model) handleMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 			if row < 0 || row >= m.rows() {
 				break
 			}
-			if msg.X < kit.SidebarW+2 {
+			if msg.X < style.SidebarW+2 {
 				// Mouse click selects and opens in one go; only the keyboard
 				// needs Enter to confirm the highlighted row.
 				m.clickSubtab(row)
@@ -130,7 +136,7 @@ func (m model) handleMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 // focus; only the Apply/Cancel rows act. The form owns the widgets, so the
 // events go straight to them.
 func (m *model) clickSettings(x, row int) tea.Cmd {
-	if x < kit.SidebarW+2 || m.form.Busy || len(m.snap.Wifi.Bands) == 0 {
+	if x < style.SidebarW+2 || m.form.Busy || len(m.snap.Wifi.Bands) == 0 {
 		return nil
 	}
 	off := wifi.FormRowOffset(m.settingsState().Wifi)
@@ -148,7 +154,7 @@ func (m *model) clickSettings(x, row int) tea.Cmd {
 		// still only take focus.
 		if m.form.Focus == wifi.FocusSSID || m.form.Focus == wifi.FocusPassword {
 			if m.form.Iface == "" {
-				m.formNote = kit.Tr.NoAP
+				m.formNote = style.Tr.NoAP
 				return nil
 			}
 			if in := m.form.Text(); in != nil {
@@ -159,8 +165,8 @@ func (m *model) clickSettings(x, row int) tea.Cmd {
 		return nil
 	case row == off+wifi.FocusApply+1:
 		// Apply and Cancel share one row; the Buttons component picks.
-		ax := x - (kit.SidebarW + 2)
-		btns := components.Buttons{Labels: [2]string{kit.Tr.Apply, kit.Tr.Cancel}}
+		ax := x - (style.SidebarW + 2)
+		btns := components.Buttons{Labels: [2]string{style.Tr.Apply, style.Tr.Cancel}}
 		if !btns.Click(ax, 0) {
 			return nil
 		}
@@ -180,7 +186,7 @@ func (m *model) clickSettings(x, row int) tea.Cmd {
 // clickCron maps a pointer position onto the sub-tab strip, the job list or
 // the form. Text rows start editing in the same click; pickers only take focus.
 func (m *model) clickCron(x, row int) tea.Cmd {
-	if x < kit.SidebarW+2 {
+	if x < style.SidebarW+2 {
 		return nil
 	}
 	st := m.settingsState().Cron
@@ -200,7 +206,7 @@ func (m *model) clickCron(x, row int) tea.Cmd {
 		m.cronCursor = i
 		// The job switch is a checkbox drawn at columns 4..6; the component
 		// resolves the press, the pane persists the flip in the background.
-		ax := x - (kit.SidebarW + 2)
+		ax := x - (style.SidebarW + 2)
 		if ax >= 4 && ax <= 6 {
 			cb := components.Checkbox{On: st.Jobs[i].Enabled}
 			cb.Click(ax-4, row)
@@ -222,7 +228,7 @@ func (m *model) clickCron(x, row int) tea.Cmd {
 		return nil
 	}
 	if row == cron.ButtonsRow(st) {
-		ax := x - (kit.SidebarW + 2)
+		ax := x - (style.SidebarW + 2)
 		btns := m.cron.Buttons()
 		if !btns.Click(ax, 0) {
 			return nil
@@ -254,7 +260,7 @@ func (m *model) clickStartup(x, row int) tea.Cmd {
 		f.Focus = row - off
 		// The task switch is a checkbox at columns 4..6; the component
 		// resolves the press, the form persists the flip.
-		ax := x - (kit.SidebarW + 2)
+		ax := x - (style.SidebarW + 2)
 		if ax >= 4 && ax <= 6 {
 			cb := components.Checkbox{On: true}
 			cb.Click(ax-4, row)
@@ -265,7 +271,7 @@ func (m *model) clickStartup(x, row int) tea.Cmd {
 		return nil
 	}
 	if row == off+max(1, n)+1 {
-		ax := x - (kit.SidebarW + 2)
+		ax := x - (style.SidebarW + 2)
 		btns := f.Buttons()
 		if !btns.Click(ax, 0) {
 			return nil
@@ -285,7 +291,7 @@ func (m *model) clickStartup(x, row int) tea.Cmd {
 // clickLang selects a row of the language picker through the radio component;
 // clicking a radio is the expected way to choose.
 func (m *model) clickLang(x, row int) {
-	if x < kit.SidebarW+2 {
+	if x < style.SidebarW+2 {
 		return
 	}
 	r := components.Radio{Options: language.Choices, Cursor: m.langFocus, Sel: m.langSel}
@@ -304,7 +310,7 @@ func (m *model) wheelStep(msg tea.MouseMsg, d int) bool {
 	switch {
 	case m.tab == tabSettings && !m.subActive:
 		// The sidebar is one long option list; the wheel walks it.
-		if msg.X >= kit.SidebarW+2 {
+		if msg.X >= style.SidebarW+2 {
 			return false
 		}
 		m.moveSubtab(d)
@@ -312,7 +318,7 @@ func (m *model) wheelStep(msg tea.MouseMsg, d int) bool {
 
 	case m.tab == 1 && !m.netActive:
 		// The network sidebar is an option list too.
-		if msg.X >= kit.SidebarW+2 {
+		if msg.X >= style.SidebarW+2 {
 			return false
 		}
 		m.moveNetSel(d)
@@ -405,6 +411,18 @@ func (m *model) clickSpeed(row int) tea.Cmd {
 	return cmd
 }
 
+// clickPorts maps a pointer position onto the port scan pane: the whole
+// action row is the hit area, in either visual form. The pane starts at body
+// row 0, aligned with the sidebar.
+func (m *model) clickPorts(row int) tea.Cmd {
+	if row != portscan.StartRow || m.scan.Phase == portscan.PhaseRunning {
+		return nil
+	}
+	mm, cmd := m.startScan()
+	*m = mm.(model)
+	return cmd
+}
+
 // clickSubtab selects and enters a sidebar row in one step: a mouse click is
 // itself the confirmation, unlike the keyboard which needs Enter.
 func (m *model) clickSubtab(i int) {
@@ -424,7 +442,7 @@ func (m *model) clickSubtab(i int) {
 // clickSystem selects an action; clicking the selected one (or the
 // confirmation line) runs it. That mirrors the two Enters of the keyboard.
 func (m *model) clickSystem(x, row int) tea.Cmd {
-	if x < kit.SidebarW+2 || m.sysBusy {
+	if x < style.SidebarW+2 || m.sysBusy {
 		return nil
 	}
 	if i := row - system.LineOffset(); i >= 0 && i < int(system.Count) {

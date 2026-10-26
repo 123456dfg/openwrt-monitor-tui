@@ -35,14 +35,11 @@ jobs:
       - name: go test
         run: go test -race ./...
 
-      - name: cross-compile
-        run: make all
-
-      - name: pack binaries (upx)
+      - name: build and pack all targets (upx)
         run: |
           sudo apt-get update
           sudo apt-get install -y upx-ucl
-          make pack
+          make release
 
       - name: upload binaries
         uses: actions/upload-artifact@v4

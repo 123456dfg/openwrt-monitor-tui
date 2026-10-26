@@ -1,18 +1,19 @@
 package widgets
 
 import (
+	"openwrt-monitor-tui/ui/i18n"
 	"strings"
 	"testing"
 
 	"github.com/charmbracelet/lipgloss"
 
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 )
 
 func TestChartBraille(t *testing.T) {
-	kit.SetLang("en")
-	kit.SetUnicode()
-	t.Cleanup(kit.SetUnicode)
+	i18n.SetLang("en")
+	style.SetUnicode()
+	t.Cleanup(style.SetUnicode)
 
 	values := []float64{0, 10, 25, 60, 30, 5, 0}
 	c := Chart(values, 12)
@@ -45,8 +46,8 @@ func TestChartBraille(t *testing.T) {
 }
 
 func TestChartASCII(t *testing.T) {
-	kit.SetASCII()
-	t.Cleanup(kit.SetUnicode)
+	style.SetASCII()
+	t.Cleanup(style.SetUnicode)
 
 	c := Chart([]float64{1, 2, 3}, 6)
 	if strings.ContainsRune(c, 0x2800) {

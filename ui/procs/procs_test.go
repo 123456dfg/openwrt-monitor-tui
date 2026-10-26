@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"openwrt-monitor-tui/collect"
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 )
 
 func sample() collect.Snapshot {
@@ -65,14 +65,14 @@ func TestTopDoesNotMutateInput(t *testing.T) {
 }
 
 func TestHeaderMark(t *testing.T) {
-	defer kit.SetUnicode()
+	defer style.SetUnicode()
 	rows := Top(sample().Procs, ByCPU, true, DisplayLimit)
-	kit.SetUnicode()
+	style.SetUnicode()
 	out := strings.Join(Body(rows, 4, ByCPU, true), "\n")
 	if !strings.Contains(out, "CPU%▼") || strings.Contains(out, "RSS▼") {
 		t.Fatalf("unicode mark missing: %s", out)
 	}
-	kit.SetASCII()
+	style.SetASCII()
 	out = strings.Join(Body(rows, 4, ByMem, false), "\n")
 	if !strings.Contains(out, "RSS^") || strings.Contains(out, "CPU%v") {
 		t.Fatalf("ascii mark missing: %s", out)

@@ -1,13 +1,15 @@
 package ui
 
 import (
+	"openwrt-monitor-tui/ui/i18n"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 
 	"openwrt-monitor-tui/collect"
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/task"
 	"openwrt-monitor-tui/ui/network"
+	"openwrt-monitor-tui/ui/network/portscan"
 	"openwrt-monitor-tui/ui/network/speedtest"
 	"openwrt-monitor-tui/ui/procs"
 	"openwrt-monitor-tui/ui/settings"
@@ -15,6 +17,7 @@ import (
 	"openwrt-monitor-tui/ui/settings/startup"
 	"openwrt-monitor-tui/ui/settings/wifi"
 	"openwrt-monitor-tui/ui/status"
+	"openwrt-monitor-tui/ui/style"
 	"openwrt-monitor-tui/ui/widgets/components"
 )
 
@@ -72,6 +75,9 @@ type (
 		rate speedtest.Rate
 		err  error
 	}
+	scanDoneMsg struct {
+		res task.PortScanResult
+	}
 )
 
 type model struct {
@@ -99,6 +105,8 @@ type model struct {
 
 	traffic *network.Tracker
 	hist    *status.Tracker
+	scanJob *task.PortScan
+	scan    portscan.State
 
 	form     wifi.Form
 	formNote string // transient "applied"/"reverted" feedback
@@ -127,7 +135,7 @@ type model struct {
 	refreshSeq int
 }
 
-func tabNames() []string { return kit.Tr.Tabs[:] }
+func tabNames() []string { return style.Tr.Tabs[:] }
 
 // tabHits holds the [start,end] x range of each tab, matching View's layout.
 // Widths are terminal cells, not runes, so the CJK labels stay clickable.
@@ -143,10 +151,12 @@ func New(refresh time.Duration, started time.Time) tea.Model {
 		col:       collect.NewCollector(),
 		refresh:   refresh,
 		boot:      time.Since(started),
-		langSel:   kit.LangChoice(),
-		langFocus: kit.LangChoice(),
+		langSel:   i18n.LangChoice(),
+		langFocus: i18n.LangChoice(),
 		traffic:   network.NewTracker(),
 		hist:      status.NewTracker(),
+		scanJob:   task.NewPortScan(),
+		scan:      portscan.New(),
 		cron:      cron.NewForm(),
 	}
 	// The crontab and rc.local are parsed in the background on demand, so the
@@ -186,7 +196,7 @@ func (m *model) setTab(i int) {
 // moveNetSel walks the network sidebar and previews that sub-tab, mirroring
 // the settings sidebar.
 func (m *model) moveNetSel(d int) {
-	m.netSel = wrapIndex(m.netSel, d, network.TabSpeed+1)
+	m.netSel = wrapIndex(m.netSel, d, network.TabPorts+1)
 	m.netOpen = m.netSel
 }
 
@@ -293,7 +303,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		m.sysErr = ""
-		m.sysNote = kit.Tr.SysDone
+		m.sysNote = style.Tr.SysDone
 		return m, nil
 
 	case speedPreparedMsg:
@@ -333,6 +343,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case scanDoneMsg:
+		m.scan.Phase = portscan.PhaseDone
+		m.scan.Hosts = msg.res.Hosts
+		if msg.res.Err != nil {
+			m.scan.Err = msg.res.Err.Error()
+			return m, nil
+		}
+		m.scan.Err = ""
+		return m, nil
+
 	case jobsReloadMsg:
 		m.snap.Cron = msg.cron
 		m.snap.Startup = msg.startup
@@ -366,7 +386,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.startup.Adopt()
 		m.startupErr = ""
-		m.startupNote = kit.Tr.StartupSaved
+		m.startupNote = style.Tr.StartupSaved
 		return m, m.reloadJobsCmd()
 
 	case cronApplyMsg:
@@ -380,9 +400,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.cronTab = cron.TabList
 		m.cronErr = ""
 		if msg.updated {
-			m.cronNote = kit.Tr.CronUpdated
+			m.cronNote = style.Tr.CronUpdated
 		} else {
-			m.cronNote = kit.Tr.CronAdded
+			m.cronNote = style.Tr.CronAdded
 		}
 		return m, m.reloadJobsCmd()
 
@@ -395,7 +415,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.form.Adopt()
 		m.formErr = ""
-		m.formNote = kit.Tr.Applied
+		m.formNote = style.Tr.Applied
 		return m, m.collectCmd(false)
 
 	case tea.KeyMsg:
@@ -427,7 +447,9 @@ func (m model) body() []string {
 	case 1:
 		st := m.speed
 		st.Active = m.netActive && m.netOpen == network.TabSpeed
-		return network.Body(m.snap, m.traffic, m.w, m.netSel, m.netOpen, m.netActive, st)
+		pt := m.scan
+		pt.Active = m.netActive && m.netOpen == network.TabPorts
+		return network.Body(m.snap, m.traffic, m.w, m.netSel, m.netOpen, m.netActive, st, pt)
 	case 2:
 		return procs.Body(m.procRows, m.snap.ProcN, m.procBy, m.procDesc)
 	case tabSettings:

@@ -1,13 +1,13 @@
 package startup
 
 import (
+	"openwrt-monitor-tui/ui/i18n"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"openwrt-monitor-tui/collect"
-	"openwrt-monitor-tui/ui/kit"
 )
 
 func info() collect.StartupInfo {
@@ -51,7 +51,7 @@ func TestParseLines(t *testing.T) {
 }
 
 func TestToggleAndInsert(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	f := FromInfo(info(), 0)
 
 	f.Toggle(0) // disable /bin/true
@@ -88,7 +88,7 @@ func TestToggleAndInsert(t *testing.T) {
 }
 
 func TestEditTask(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	f := FromInfo(info(), 0)
 	if !f.Begin(1) {
 		t.Fatal("begin failed")
@@ -107,7 +107,7 @@ func TestEditTask(t *testing.T) {
 }
 
 func TestResetAndAdopt(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	f := FromInfo(info(), 0)
 	f.Toggle(0)
 	f.Reset()
@@ -125,7 +125,7 @@ func TestResetAndAdopt(t *testing.T) {
 }
 
 func TestSave(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	path := filepath.Join(t.TempDir(), "rc.local")
 	if err := os.WriteFile(path, []byte("old\n"), 0o750); err != nil {
 		t.Fatal(err)

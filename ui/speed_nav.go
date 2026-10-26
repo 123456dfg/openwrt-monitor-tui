@@ -3,6 +3,7 @@ package ui
 import (
 	tea "github.com/charmbracelet/bubbletea"
 
+	"openwrt-monitor-tui/ui/network/portscan"
 	speed "openwrt-monitor-tui/ui/network/speedtest"
 )
 
@@ -47,5 +48,32 @@ func (m model) speedUpCmd() tea.Cmd {
 	return func() tea.Msg {
 		rate, err := speed.Providers[0].Native.Up(h, live)
 		return speedUpMsg{rate: rate, err: err}
+	}
+}
+
+// updatePorts handles the keyboard inside the entered port scan pane; Esc
+// back to the sidebar is handled by handleKey.
+func (m model) updatePorts(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "enter", " ":
+		return m.startScan()
+	}
+	return m, nil
+}
+
+// startScan kicks off a background scan through the task package; repeated
+// presses while one is running do nothing.
+func (m model) startScan() (tea.Model, tea.Cmd) {
+	if m.scan.Phase == portscan.PhaseRunning {
+		return m, nil
+	}
+	job := m.scanJob
+	m.scan.Phase = portscan.PhaseRunning
+	m.scan.Progress = job.Progress()
+	m.scan.Err = ""
+	return m, func() tea.Msg {
+		job.Start() // runs the scan to completion on this goroutine
+		res, _ := job.Result()
+		return scanDoneMsg{res: res}
 	}
 }

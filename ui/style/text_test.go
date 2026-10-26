@@ -1,6 +1,7 @@
-package kit
+package style
 
 import (
+	"openwrt-monitor-tui/ui/i18n"
 	"testing"
 	"time"
 
@@ -8,9 +9,9 @@ import (
 )
 
 func TestFormatUptime(t *testing.T) {
-	t.Cleanup(func() { SetLang("en") })
+	t.Cleanup(func() { i18n.SetLang("en") })
 
-	SetLang("zh")
+	i18n.SetLang("zh")
 	if got := FormatUptime(41*time.Hour + 50*time.Minute); got != "1天 17小时 50分钟" {
 		t.Fatalf("zh: %q", got)
 	}
@@ -18,7 +19,7 @@ func TestFormatUptime(t *testing.T) {
 		t.Fatalf("zero: %q", got)
 	}
 
-	SetLang("en")
+	i18n.SetLang("en")
 	if got := FormatUptime(41*time.Hour + 50*time.Minute); got != "1d 17h 50m" {
 		t.Fatalf("en: %q", got)
 	}

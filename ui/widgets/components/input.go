@@ -3,7 +3,7 @@ package components
 import (
 	"strings"
 
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 )
 
 // Input is a single-line text field. Editing is driven by the caller: only one
@@ -54,5 +54,5 @@ func (in Input) View(editing bool) string {
 
 // Mask hides a secret of unknown length behind a fixed number of dots.
 func Mask(n int) string {
-	return strings.Repeat(kit.Glyph.Mask, n)
+	return strings.Repeat(style.Glyph.Mask, n)
 }

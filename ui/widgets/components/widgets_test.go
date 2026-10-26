@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 )
 
 func TestCheckbox(t *testing.T) {
@@ -78,8 +78,8 @@ func TestSelect(t *testing.T) {
 }
 
 func TestRadio(t *testing.T) {
-	kit.SetColor(false)
-	t.Cleanup(func() { kit.SetColor(true) })
+	style.SetColor(false)
+	t.Cleanup(func() { style.SetColor(true) })
 
 	r := NewRadio(1)
 	r.Options = []string{"auto", "en", "zh"}
@@ -88,7 +88,7 @@ func TestRadio(t *testing.T) {
 	if len(lines) != 3 {
 		t.Fatalf("lines: %d", len(lines))
 	}
-	if !strings.Contains(lines[1], "(o)") || !strings.Contains(lines[1], kit.Glyph.Sel) {
+	if !strings.Contains(lines[1], "(o)") || !strings.Contains(lines[1], style.Glyph.Sel) {
 		t.Fatalf("selected line: %q", lines[1])
 	}
 	for i, line := range lines {
@@ -110,15 +110,15 @@ func TestRadio(t *testing.T) {
 		t.Fatalf("wrap: %d", r.Cursor)
 	}
 	r.Cursor = -1
-	if strings.Contains(strings.Join(r.Lines([]string{"a", "b", "c"}), "\n"), kit.Glyph.Sel) {
+	if strings.Contains(strings.Join(r.Lines([]string{"a", "b", "c"}), "\n"), style.Glyph.Sel) {
 		t.Fatal("negative cursor should hide the marker")
 	}
 }
 
 func TestMask(t *testing.T) {
-	kit.SetColor(false)
-	t.Cleanup(func() { kit.SetColor(true) })
-	if got := Mask(4); strings.Count(got, kit.Glyph.Mask) != 4 {
+	style.SetColor(false)
+	t.Cleanup(func() { style.SetColor(true) })
+	if got := Mask(4); strings.Count(got, style.Glyph.Mask) != 4 {
 		t.Fatalf("mask: %q", got)
 	}
 }

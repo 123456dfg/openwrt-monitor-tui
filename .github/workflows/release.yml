@@ -21,14 +21,13 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: build all targets
-        run: make all VERSION=${{ github.ref_name }}
-
-      - name: pack binaries (upx)
+      - name: install upx
         run: |
           sudo apt-get update
           sudo apt-get install -y upx-ucl
-          make pack
+
+      - name: build and pack all targets
+        run: make release VERSION=${{ github.ref_name }}
 
       - name: checksums
         run: |

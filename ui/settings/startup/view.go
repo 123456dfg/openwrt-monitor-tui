@@ -3,7 +3,7 @@ package startup
 import (
 	"fmt"
 
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 	"openwrt-monitor-tui/ui/widgets/components"
 )
 
@@ -20,36 +20,36 @@ type State struct {
 // Pane renders the task list: one switch and one command per task. Comments,
 // the shebang and the exit line are kept in the file but not shown.
 func Pane(st State) []string {
-	head := "  " + kit.Label.Render(st.Path)
+	head := "  " + style.Label.Render(st.Path)
 	if st.Form.Changed() {
-		head += "  " + kit.Warn.Render("*")
+		head += "  " + style.Warn.Render("*")
 	}
 	if st.Loading {
-		return []string{"", "  " + kit.Dim.Render(kit.Tr.Loading)}
+		return []string{"", "  " + style.Dim.Render(style.Tr.Loading)}
 	}
 	out := []string{"", head}
 	if st.Err != "" {
-		out = append(out, "  "+kit.Bad.Render(st.Err))
+		out = append(out, "  "+style.Bad.Render(st.Err))
 	}
 	if st.Note != "" {
-		out = append(out, "  "+kit.Good.Render(st.Note))
+		out = append(out, "  "+style.Good.Render(st.Note))
 	}
 	out = append(out, "")
 
 	if !st.Form.Available {
-		out = append(out, "  "+kit.Bad.Render(fmt.Sprintf(kit.Tr.StartupMiss, st.Path)))
+		out = append(out, "  "+style.Bad.Render(fmt.Sprintf(style.Tr.StartupMiss, st.Path)))
 		return out
 	}
 
 	f := st.Form
 	if f.TaskCount() == 0 {
-		out = append(out, "  "+kit.Dim.Render(kit.Tr.StartupNoTasks))
+		out = append(out, "  "+style.Dim.Render(style.Tr.StartupNoTasks))
 	}
 	for row := 0; row < f.TaskCount(); row++ {
 		entry, _ := f.TaskAt(row)
 		marker := "  "
 		if st.Active && row == f.Focus {
-			marker = kit.Glyph.Sel + " "
+			marker = style.Glyph.Sel + " "
 		}
 		check := components.Checkbox{On: entry.Enabled}.String()
 
@@ -60,7 +60,7 @@ func Pane(st State) []string {
 		}
 
 		if st.Active && row == f.Focus {
-			out = append(out, "  "+marker+kit.Accent.Render(check+" "+text))
+			out = append(out, "  "+marker+style.Accent.Render(check+" "+text))
 			continue
 		}
 		out = append(out, "  "+marker+check+" "+text)

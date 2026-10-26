@@ -2,7 +2,7 @@ package cron
 
 import (
 	"openwrt-monitor-tui/collect"
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 	"openwrt-monitor-tui/ui/widgets/components"
 )
 
@@ -29,17 +29,17 @@ type State struct {
 func Pane(st State) []string {
 	out := []string{"  " + strip(st), ""}
 	if st.Err != "" {
-		out = append(out, "  "+kit.Bad.Render(st.Err))
+		out = append(out, "  "+style.Bad.Render(st.Err))
 	}
 	if st.Note != "" {
-		out = append(out, "  "+kit.Good.Render(st.Note))
+		out = append(out, "  "+style.Good.Render(st.Note))
 	}
 	if st.Err != "" || st.Note != "" {
 		out = append(out, "")
 	}
 	if st.Tab == TabList {
 		if st.Loading {
-			return append(out, "  "+kit.Dim.Render(kit.Tr.Loading))
+			return append(out, "  "+style.Dim.Render(style.Tr.Loading))
 		}
 		return append(out, list(st)...)
 	}
@@ -79,11 +79,11 @@ func strip(st State) string {
 }
 
 func tabs(st State) [2]string {
-	editor := kit.Tr.CronTabNew
+	editor := style.Tr.CronTabNew
 	if st.Form.EditLine >= 0 {
-		editor = kit.Tr.CronTabEdit
+		editor = style.Tr.CronTabEdit
 	}
-	return [2]string{kit.Tr.CronTabList, editor}
+	return [2]string{style.Tr.CronTabList, editor}
 }
 
 // TabClick maps a press on the strip (x in pane-content coordinates) to a
@@ -94,7 +94,7 @@ func TabClick(st State, x int) int {
 		cur = TabList
 	}
 	names := tabs(st)
-	return components.Tabs{Names: names[:], Cur: cur}.Click(kit.SidebarW+4, x)
+	return components.Tabs{Names: names[:], Cur: cur}.Click(style.SidebarW+4, x)
 }
 
 // TabHits returns the clickable x range of both sub-tabs (layout helper for
@@ -106,15 +106,15 @@ func TabHits(st State) [][2]int {
 	}
 	names := tabs(st)
 	// Sidebar width + pane indent + the strip's own two-space prefix.
-	return components.Tabs{Names: names[:], Cur: cur}.Hits(kit.SidebarW + 4)
+	return components.Tabs{Names: names[:], Cur: cur}.Hits(style.SidebarW + 4)
 }
 
 func list(st State) []string {
 	switch {
 	case !st.Avail:
-		return []string{"  " + kit.Dim.Render(kit.Tr.CronNoCron)}
+		return []string{"  " + style.Dim.Render(style.Tr.CronNoCron)}
 	case len(st.Jobs) == 0:
-		return []string{"  " + kit.Dim.Render(kit.Tr.CronNone)}
+		return []string{"  " + style.Dim.Render(style.Tr.CronNone)}
 	}
 	out := make([]string, 0, len(st.Jobs))
 	for i, job := range st.Jobs {
@@ -122,7 +122,7 @@ func list(st State) []string {
 		// behind Enter.
 		check := components.Checkbox{On: job.Enabled}.String()
 		if st.Active && i == st.Cursor {
-			out = append(out, "  "+kit.Glyph.Sel+" "+kit.Accent.Render(check+" "+job.Command))
+			out = append(out, "  "+style.Glyph.Sel+" "+style.Accent.Render(check+" "+job.Command))
 			continue
 		}
 		out = append(out, "  "+"  "+check+" "+job.Command)
@@ -147,23 +147,23 @@ func rows(st State) []string {
 		name, value, dim := "", "", false
 		switch row {
 		case FocusKind:
-			name, value = kit.Tr.CronKind, f.Kind.View(editing(FocusKind))
+			name, value = style.Tr.CronKind, f.Kind.View(editing(FocusKind))
 		case FocusWhen:
 			name, value = f.WhenLabel(), f.When.View(editing(FocusWhen))
 		case FocusWeekday:
-			name, value = kit.Tr.CronWeekday, f.Weekday.View(editing(FocusWeekday))
+			name, value = style.Tr.CronWeekday, f.Weekday.View(editing(FocusWeekday))
 			dim = f.KindIndex() != KindWeekly
 		case FocusCommand:
-			name, value = kit.Tr.CronCommand, f.Command.View(editing(FocusCommand))
+			name, value = style.Tr.CronCommand, f.Command.View(editing(FocusCommand))
 		}
 		line := fieldRow(row == focus, name, value, dim)
 		if row == focus {
 			switch row {
 			case FocusWhen:
-				line += "   " + kit.Dim.Render(f.WhenHint())
+				line += "   " + style.Dim.Render(f.WhenHint())
 			case FocusKind, FocusWeekday:
 				if f.Editing {
-					line += "   " + kit.Dim.Render("←/→")
+					line += "   " + style.Dim.Render("←/→")
 				}
 			}
 		}
@@ -179,15 +179,15 @@ func rows(st State) []string {
 
 func fieldRow(focused bool, name, value string, dim bool) string {
 	marker := "  "
-	nameStyle, valStyle := kit.Label, kit.Style()
+	nameStyle, valStyle := style.Label, style.Style()
 	if dim {
-		nameStyle, valStyle = kit.Dim, kit.Dim
+		nameStyle, valStyle = style.Dim, style.Dim
 	}
 	if focused {
-		marker = kit.Glyph.Sel + " "
+		marker = style.Glyph.Sel + " "
 		if !dim {
-			nameStyle, valStyle = kit.Accent, kit.Accent
+			nameStyle, valStyle = style.Accent, style.Accent
 		}
 	}
-	return "  " + marker + nameStyle.Render(kit.PadRight(name, 9)) + " " + valStyle.Render(value)
+	return "  " + marker + nameStyle.Render(style.PadRight(name, 9)) + " " + valStyle.Render(value)
 }

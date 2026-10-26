@@ -1,6 +1,9 @@
-package i18n
+package en
 
-var en = Strings{
+import "openwrt-monitor-tui/ui/i18n/table"
+
+// T is the English string table.
+var T = table.Strings{
 	Tabs: [4]string{"Status", "Network", "Processes", "Settings"},
 
 	Loading:         "loading…",
@@ -34,11 +37,15 @@ var en = Strings{
 	TotalTraffic: "total traffic  down %s  up %s",
 	Traffic:      "TRAFFIC",
 
-	NetTabOverview: "Overview", NetTabSpeed: "Speed test",
+	NetTabOverview: "Overview", NetTabSpeed: "Speed test", NetTabPorts: "Ports",
 	HintSpeed: "enter start  esc back  q quit",
+	HintPorts: "enter start scan  esc back  q quit",
 
 	SpeedStart: "Start", SpeedRunning: "testing…", SpeedTool: "tool",
 	SpeedServer: "server", SpeedDown: "down", SpeedUp: "up", SpeedErr: "speed test failed",
+
+	PortStart: "Start scan", PortRunning: "scanning…", PortProbed: "probed",
+	PortSummary: "found %d hosts, %d open ports", PortNone: "no open ports found",
 
 	PID: "PID", CPUPct: "CPU%", RSS: "RSS", Command: "COMMAND",
 	NoProcs:     "no processes found",

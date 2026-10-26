@@ -3,10 +3,11 @@ package system
 import (
 	"context"
 	"errors"
+	"openwrt-monitor-tui/ui/i18n"
 	"strings"
 	"testing"
 
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 )
 
 func TestRunActions(t *testing.T) {
@@ -54,28 +55,28 @@ func TestFactoryStopsOnFirstbootError(t *testing.T) {
 }
 
 func TestPaneStates(t *testing.T) {
-	kit.SetLang("en")
-	kit.SetColor(false)
-	t.Cleanup(func() { kit.SetColor(true); kit.SetLang("en") })
+	i18n.SetLang("en")
+	style.SetColor(false)
+	t.Cleanup(func() { style.SetColor(true); i18n.SetLang("en") })
 
 	lines := Pane(State{Active: true, Sel: 1, Confirm: true})
 	if len(lines) <= ConfirmRow() {
 		t.Fatalf("pane too short: %d", len(lines))
 	}
-	if !strings.Contains(lines[LineOffset()+1], kit.Tr.SysPoweroff) {
+	if !strings.Contains(lines[LineOffset()+1], style.Tr.SysPoweroff) {
 		t.Fatalf("power off row missing: %q", lines[LineOffset()+1])
 	}
-	if !strings.Contains(lines[ConfirmRow()], kit.Tr.SysPoweroff) {
+	if !strings.Contains(lines[ConfirmRow()], style.Tr.SysPoweroff) {
 		t.Fatalf("confirm line: %q", lines[ConfirmRow()])
 	}
 
 	busy := Pane(State{Busy: true})
-	if !strings.Contains(busy[ConfirmRow()], kit.Tr.SysRunning) {
+	if !strings.Contains(busy[ConfirmRow()], style.Tr.SysRunning) {
 		t.Fatalf("busy line: %q", busy[ConfirmRow()])
 	}
 
-	done := Pane(State{Note: kit.Tr.SysDone})
-	if !strings.Contains(strings.Join(done, "\n"), kit.Tr.SysDone) {
+	done := Pane(State{Note: style.Tr.SysDone})
+	if !strings.Contains(strings.Join(done, "\n"), style.Tr.SysDone) {
 		t.Fatal("note missing")
 	}
 	if got := Pane(State{}); got[ConfirmRow()] != "" {

@@ -1,14 +1,15 @@
 package speedtest
 
 import (
+	"openwrt-monitor-tui/ui/i18n"
 	"strings"
 	"testing"
 
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 )
 
 func TestPaneIdle(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	out := strings.Join(Pane(New()), "\n")
 	if !strings.Contains(out, "[ Start ]") {
 		t.Fatalf("bracketed button missing:\n%s", out)
@@ -23,24 +24,24 @@ func TestPaneIdle(t *testing.T) {
 
 // Entering the sub-tab turns the bracketed button into the play-style row.
 func TestPaneEntered(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	st := New()
 	st.Active = true
 	out := strings.Join(Pane(st), "\n")
-	if !strings.Contains(out, kit.Glyph.Sel+" "+kit.Tr.SpeedStart) || strings.Contains(out, "[ Start ]") {
+	if !strings.Contains(out, style.Glyph.Sel+" "+style.Tr.SpeedStart) || strings.Contains(out, "[ Start ]") {
 		t.Fatalf("play-style row missing:\n%s", out)
 	}
 
 	// While a run is in flight the label swaps, the form stays.
 	st.Running = true
 	out = strings.Join(Pane(st), "\n")
-	if !strings.Contains(out, kit.Glyph.Sel+" "+kit.Tr.SpeedRunning) {
+	if !strings.Contains(out, style.Glyph.Sel+" "+style.Tr.SpeedRunning) {
 		t.Fatalf("running label missing:\n%s", out)
 	}
 }
 
 func TestPaneLive(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	st := New()
 	st.Phase = PhaseDown
 	st.Live = &Live{}
@@ -52,7 +53,7 @@ func TestPaneLive(t *testing.T) {
 }
 
 func TestPaneServer(t *testing.T) {
-	kit.SetLang("zh")
+	i18n.SetLang("zh")
 	st := New()
 	st.Server = "Hong Kong, Hong Kong"
 	out := strings.Join(Pane(st), "\n")
@@ -62,7 +63,7 @@ func TestPaneServer(t *testing.T) {
 }
 
 func TestPaneResult(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	st := New()
 	st.Tool = "speedtest-go"
 	st.Down = Rate{BPS: 10e6 / 8, Bytes: 12_500_000} // 10 Mbps
@@ -77,7 +78,7 @@ func TestPaneResult(t *testing.T) {
 }
 
 func TestStartClick(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	btns := StartButton()
 	if !btns.Click(2, 0) || btns.Focus != 0 {
 		t.Fatalf("start click: focus=%d", btns.Focus)

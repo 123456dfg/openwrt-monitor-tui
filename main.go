@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"openwrt-monitor-tui/ui/i18n"
 	"os"
 	"strings"
 	"time"
@@ -12,7 +13,7 @@ import (
 	"openwrt-monitor-tui/collect"
 	_ "openwrt-monitor-tui/prep"
 	"openwrt-monitor-tui/ui"
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 )
 
 // version is injected with -ldflags "-X main.version=..." by the release build.
@@ -33,19 +34,19 @@ func main() {
 		return
 	}
 
-	kit.SetLang(*lang)
+	i18n.SetLang(*lang)
 	if *ascii {
-		kit.SetASCII()
+		style.SetASCII()
 	}
 
 	switch strings.ToLower(*color) {
 	case "on", "always", "yes":
-		kit.SetColor(true)
+		style.SetColor(true)
 	case "off", "never", "no":
-		kit.SetColor(false)
+		style.SetColor(false)
 	default:
 		// NO_COLOR is the de-facto standard opt-out; honour it in auto mode.
-		kit.SetColor(!collect.LowEnd() && os.Getenv("NO_COLOR") == "")
+		style.SetColor(!collect.LowEnd() && os.Getenv("NO_COLOR") == "")
 	}
 
 	opts := []tea.ProgramOption{tea.WithAltScreen()}

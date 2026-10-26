@@ -1,6 +1,9 @@
-package i18n
+package zh
 
-var zh = Strings{
+import "openwrt-monitor-tui/ui/i18n/table"
+
+// T is the Chinese string table.
+var T = table.Strings{
 	Tabs: [4]string{"状态", "网络", "进程", "设置"},
 
 	Loading:         "加载中…",
@@ -34,11 +37,15 @@ var zh = Strings{
 	TotalTraffic: "累计流量  下行 %s  上行 %s",
 	Traffic:      "流量",
 
-	NetTabOverview: "概览", NetTabSpeed: "测速",
+	NetTabOverview: "概览", NetTabSpeed: "测速", NetTabPorts: "端口探测",
 	HintSpeed: "enter 开始测速  esc 返回  q 退出",
+	HintPorts: "enter 开始扫描  esc 返回  q 退出",
 
 	SpeedStart: "开始测速", SpeedRunning: "测速中…", SpeedTool: "工具",
 	SpeedServer: "服务器", SpeedDown: "下行", SpeedUp: "上行", SpeedErr: "测速失败",
+
+	PortStart: "开始扫描", PortRunning: "扫描中…", PortProbed: "已探测",
+	PortSummary: "发现 %d 台主机，%d 个开放端口", PortNone: "未发现开放端口",
 
 	PID: "进程号", CPUPct: "CPU%", RSS: "内存", Command: "命令",
 	NoProcs:     "未找到进程",

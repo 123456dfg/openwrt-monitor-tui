@@ -5,7 +5,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 )
 
 // Tabs is a horizontal tab strip: the labels of the tabs with one active
@@ -32,14 +32,14 @@ func (t Tabs) View() string {
 			b.WriteString("   ")
 		}
 		if i == t.clamp(t.Cur) {
-			if kit.ColorOn() {
-				b.WriteString(kit.Accent.Render(n))
+			if style.ColorOn() {
+				b.WriteString(style.Accent.Render(n))
 			} else {
 				b.WriteString("[" + n + "]")
 			}
 			continue
 		}
-		b.WriteString(kit.Label.Render(n))
+		b.WriteString(style.Label.Render(n))
 	}
 	return b.String()
 }
@@ -51,7 +51,7 @@ func (t Tabs) Hits(x0 int) [][2]int {
 	hits := make([][2]int, 0, len(t.Names))
 	for i, n := range t.Names {
 		w := lipgloss.Width(n)
-		if i == t.clamp(t.Cur) && !kit.ColorOn() {
+		if i == t.clamp(t.Cur) && !style.ColorOn() {
 			w += 2 // the brackets View adds around the active tab
 		}
 		hits = append(hits, [2]int{x0, x0 + w - 1})

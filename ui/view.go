@@ -6,22 +6,22 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"openwrt-monitor-tui/ui/kit"
 	"openwrt-monitor-tui/ui/network"
 	"openwrt-monitor-tui/ui/settings"
 	"openwrt-monitor-tui/ui/settings/cron"
+	"openwrt-monitor-tui/ui/style"
 	"openwrt-monitor-tui/ui/widgets/components"
 )
 
 func (m model) View() string {
 	if m.w <= 0 {
-		return kit.Tr.Loading
+		return style.Tr.Loading
 	}
 
-	head := " " + kit.Accent.Render("openwrt-monitor-tui") + kit.Dim.Render("  "+kit.Glyph.Dot+"  ") +
-		kit.Fallback(m.snap.Release, "OpenWrt") + kit.Dim.Render("  "+kit.Glyph.Dot+"  ") +
-		kit.Fallback(m.snap.Arch, runtime.GOARCH) +
-		kit.Dim.Render("  "+kit.Glyph.Dot+"  Linux "+kit.Fallback(m.snap.Kernel, "?"))
+	head := " " + style.Accent.Render("openwrt-monitor-tui") + style.Dim.Render("  "+style.Glyph.Dot+"  ") +
+		style.Fallback(m.snap.Release, "OpenWrt") + style.Dim.Render("  "+style.Glyph.Dot+"  ") +
+		style.Fallback(m.snap.Arch, runtime.GOARCH) +
+		style.Dim.Render("  "+style.Glyph.Dot+"  Linux "+style.Fallback(m.snap.Kernel, "?"))
 	head = lipgloss.NewStyle().MaxWidth(m.w).Render(head)
 
 	tabs := m.topBar()
@@ -41,57 +41,59 @@ func (m model) View() string {
 		visible = append(visible, "")
 	}
 
-	hint := kit.Tr.HintScroll
+	hint := style.Tr.HintScroll
 	if m.tab == 1 {
 		switch {
 		case !m.netActive:
-			hint = kit.Tr.HintSidebar
+			hint = style.Tr.HintSidebar
 		case m.netOpen == network.TabSpeed:
-			hint = kit.Tr.HintSpeed
+			hint = style.Tr.HintSpeed
+		case m.netOpen == network.TabPorts:
+			hint = style.Tr.HintPorts
 		}
 	}
 	if m.tab == 2 {
-		hint = kit.Tr.HintProcs
+		hint = style.Tr.HintProcs
 	}
 	if m.tab == tabSettings {
 		switch {
 		case !m.subActive:
-			hint = kit.Tr.HintSidebar
+			hint = style.Tr.HintSidebar
 		case m.subOpen == settings.Language:
-			hint = kit.Tr.HintLang
+			hint = style.Tr.HintLang
 		case m.subOpen == settings.Cron:
-			hint = kit.Tr.HintCron
+			hint = style.Tr.HintCron
 			if m.cronTab == cron.TabList {
-				hint = kit.Tr.HintCronList
+				hint = style.Tr.HintCronList
 			}
 		case m.subOpen == settings.Startup:
-			hint = kit.Tr.HintStartup
+			hint = style.Tr.HintStartup
 		case m.subOpen == settings.System:
-			hint = kit.Tr.HintSystem
+			hint = style.Tr.HintSystem
 		default:
-			hint = kit.Tr.HintSettings
+			hint = style.Tr.HintSettings
 		}
 	}
-	right := kit.Tr.Uptime + " " + kit.FormatUptime(m.snap.Uptime) + "  " +
-		kit.Tr.RefreshInterval + " " + kit.FormatMS(m.snap.Took)
-	status := " " + kit.Dim.Render(hint)
+	right := style.Tr.Uptime + " " + style.FormatUptime(m.snap.Uptime) + "  " +
+		style.Tr.RefreshInterval + " " + style.FormatMS(m.snap.Took)
+	status := " " + style.Dim.Render(hint)
 	if m.w > 60 && lipgloss.Width(right)+20 < m.w {
 		// Pin the timing block to the right edge and give the hint whatever
 		// room is left.
 		avail := m.w - lipgloss.Width(right) - 3
 		left := truncToWidth(hint, avail)
 		pad := m.w - 1 - lipgloss.Width(left) - lipgloss.Width(right)
-		status = " " + kit.Dim.Render(left+strings.Repeat(" ", pad)+right)
+		status = " " + style.Dim.Render(left+strings.Repeat(" ", pad)+right)
 	}
 	status = fit(status, m.w)
 
 	return strings.Join([]string{
 		head,
-		kit.Dim.Render(strings.Repeat(kit.Glyph.Sep, m.w)),
+		style.Dim.Render(strings.Repeat(style.Glyph.Sep, m.w)),
 		tabs,
-		kit.Dim.Render(strings.Repeat(kit.Glyph.Sep, m.w)),
+		style.Dim.Render(strings.Repeat(style.Glyph.Sep, m.w)),
 		strings.Join(visible, "\n"),
-		kit.Dim.Render(strings.Repeat(kit.Glyph.Sep, m.w)),
+		style.Dim.Render(strings.Repeat(style.Glyph.Sep, m.w)),
 		status,
 	}, "\n")
 }
@@ -102,13 +104,13 @@ func (m model) topBar() string {
 	if m.boot <= 0 {
 		return bar
 	}
-	right := kit.Tr.Boot + " " + kit.FormatMS(m.boot)
+	right := style.Tr.Boot + " " + style.FormatMS(m.boot)
 	used := lipgloss.Width(bar)
 	if m.w <= used+lipgloss.Width(right)+2 {
 		return bar
 	}
 	pad := m.w - used - lipgloss.Width(right)
-	return bar + strings.Repeat(" ", pad) + kit.Dim.Render(right)
+	return bar + strings.Repeat(" ", pad) + style.Dim.Render(right)
 }
 
 func (m model) tabBar() string {

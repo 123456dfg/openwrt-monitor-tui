@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"openwrt-monitor-tui/collect"
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 	"openwrt-monitor-tui/ui/widgets"
 )
 
@@ -84,31 +84,31 @@ func swapUsed(m collect.MemInfo) uint64 {
 
 // Body renders the Status tab from a snapshot and its gauge history.
 func Body(s collect.Snapshot, hist *Tracker) []string {
-	up := kit.FormatUptime(s.Uptime)
+	up := style.FormatUptime(s.Uptime)
 	mem := s.Mem
 	used := memUsed(mem)
 
 	out := []string{
 		"",
-		field(kit.Tr.Hostname, s.Hostname),
-		field(kit.Tr.Model, kit.Fallback(s.Model, "-")),
-		field(kit.Tr.Kernel, "Linux "+kit.Fallback(s.Kernel, "?")),
-		field(kit.Tr.Uptime, up),
-		field(kit.Tr.Load, fmt.Sprintf("%.2f  %.2f  %.2f", s.Load[0], s.Load[1], s.Load[2])),
+		field(style.Tr.Hostname, s.Hostname),
+		field(style.Tr.Model, style.Fallback(s.Model, "-")),
+		field(style.Tr.Kernel, "Linux "+style.Fallback(s.Kernel, "?")),
+		field(style.Tr.Uptime, up),
+		field(style.Tr.Load, fmt.Sprintf("%.2f  %.2f  %.2f", s.Load[0], s.Load[1], s.Load[2])),
 		"",
-		meter(kit.Tr.CPU, s.CPUUsage, cpuDetail(s), hist.CPUChart()),
-		meter(kit.Tr.Memory, pct(used, mem.Total),
-			fmt.Sprintf("%s / %s", kit.HumanBytes(used), kit.HumanBytes(mem.Total)), hist.MemChart()),
+		meter(style.Tr.CPU, s.CPUUsage, cpuDetail(s), hist.CPUChart()),
+		meter(style.Tr.Memory, pct(used, mem.Total),
+			fmt.Sprintf("%s / %s", style.HumanBytes(used), style.HumanBytes(mem.Total)), hist.MemChart()),
 	}
 	// A device without swap has nothing to show, so the row (and its curve)
 	// is omitted instead of printing "not configured".
 	if mem.SwapTotal > 0 {
 		swap := swapUsed(mem)
-		out = append(out, meter(kit.Tr.Swap, pct(swap, mem.SwapTotal),
-			fmt.Sprintf("%s / %s", kit.HumanBytes(swap), kit.HumanBytes(mem.SwapTotal)), hist.SwapChart()))
+		out = append(out, meter(style.Tr.Swap, pct(swap, mem.SwapTotal),
+			fmt.Sprintf("%s / %s", style.HumanBytes(swap), style.HumanBytes(mem.SwapTotal)), hist.SwapChart()))
 	}
 	if s.TempC >= 0 {
-		out = append(out, field(kit.Tr.Temp, fmt.Sprintf("%.1f °C", s.TempC)))
+		out = append(out, field(style.Tr.Temp, fmt.Sprintf("%.1f °C", s.TempC)))
 	}
 	out = append(out, "")
 	for _, d := range s.Disks {
@@ -116,7 +116,7 @@ func Body(s collect.Snapshot, hist *Tracker) []string {
 		if d.Total < d.Free {
 			used = 0
 		}
-		detail := fmt.Sprintf(kit.Tr.FreeOf, kit.HumanBytes(d.Free), kit.HumanBytes(d.Total))
+		detail := fmt.Sprintf(style.Tr.FreeOf, style.HumanBytes(d.Free), style.HumanBytes(d.Total))
 		if d.FSType != "" {
 			detail += "  " + d.FSType
 		}
@@ -132,35 +132,35 @@ func cpuDetail(s collect.Snapshot) string {
 		return f
 	}
 	if f := fmtFreq(s.CPUFreqMax); f != "" {
-		return fmt.Sprintf(kit.Tr.FreqMax, f)
+		return fmt.Sprintf(style.Tr.FreqMax, f)
 	}
-	return kit.Tr.ClockNA
+	return style.Tr.ClockNA
 }
 
 func meter(name string, p float64, detail, chart string) string {
-	filled := int(p / 100 * kit.BarWidth)
-	bar := strings.Repeat(kit.Glyph.BarFull, filled) +
-		strings.Repeat(kit.Glyph.BarEmpty, kit.BarWidth-filled)
-	style := kit.Good
+	filled := int(p / 100 * style.BarWidth)
+	bar := strings.Repeat(style.Glyph.BarFull, filled) +
+		strings.Repeat(style.Glyph.BarEmpty, style.BarWidth-filled)
+	row := style.Good
 	switch {
 	case p >= 90:
-		style = kit.Bad
+		row = style.Bad
 	case p >= 70:
-		style = kit.Warn
+		row = style.Warn
 	}
-	line := "  " + kit.PadRight(name, 10) + " " + style.Render(bar) +
+	line := "  " + style.PadRight(name, 10) + " " + row.Render(bar) +
 		fmt.Sprintf(" %4.0f%%", p)
 	if chart != "" {
 		line += "  " + chart
 	}
 	if detail != "" {
-		line += "   " + kit.Dim.Render(detail)
+		line += "   " + style.Dim.Render(detail)
 	}
 	return line
 }
 
 func field(name, value string) string {
-	return "  " + kit.Label.Render(kit.PadRight(name, 10)) + " " + value
+	return "  " + style.Label.Render(style.PadRight(name, 10)) + " " + value
 }
 
 func pct(used, total uint64) float64 {

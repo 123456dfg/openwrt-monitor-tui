@@ -1,12 +1,17 @@
-package kit
+package style
 
 import (
 	"fmt"
+	"openwrt-monitor-tui/ui/i18n"
 	"strings"
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
 )
+
+// Tr is the active translation, shared with the i18n package: language
+// switches are visible here without any re-export step.
+var Tr = i18n.Tr
 
 // PadRight and PadLeft pad to terminal cells, so CJK labels line up with ASCII
 // ones. fmt's %-10s counts runes, not cells, and wide characters would shift

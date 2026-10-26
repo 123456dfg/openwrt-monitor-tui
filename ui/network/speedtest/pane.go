@@ -5,7 +5,7 @@ package speedtest
 import (
 	"fmt"
 
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 	"openwrt-monitor-tui/ui/widgets/components"
 )
 
@@ -39,7 +39,7 @@ func Pane(st State) []string {
 	out := make([]string, 0, 8)
 	out = append(out, startRow(st), "")
 	if st.Server != "" {
-		out = append(out, "  "+kit.Dim.Render(kit.Tr.SpeedServer+" "+st.Server))
+		out = append(out, "  "+style.Dim.Render(style.Tr.SpeedServer+" "+st.Server))
 	}
 	switch {
 	case st.Phase == PhaseDown:
@@ -48,10 +48,10 @@ func Pane(st State) []string {
 		out = append(out, liveLine(st, true))
 	}
 	if st.Note != "" {
-		out = append(out, "  "+kit.Good.Render(st.Note))
+		out = append(out, "  "+style.Good.Render(st.Note))
 	}
 	if st.Err != "" {
-		out = append(out, "  "+kit.Bad.Render(kit.Tr.SpeedErr+": "+st.Err))
+		out = append(out, "  "+style.Bad.Render(style.Tr.SpeedErr+": "+st.Err))
 	}
 	if st.Down.BPS > 0 || st.Up.BPS > 0 {
 		out = append(out, "")
@@ -63,9 +63,9 @@ func Pane(st State) []string {
 // liveLine shows the direction currently measured with its running average —
 // the pane re-renders on every event, so the number moves in real time.
 func liveLine(st State, upload bool) string {
-	arrow, label := "↓", kit.Tr.SpeedDown
+	arrow, label := "↓", style.Tr.SpeedDown
 	if upload {
-		arrow, label = "↑", kit.Tr.SpeedUp
+		arrow, label = "↑", style.Tr.SpeedUp
 	}
 	var v float64
 	if st.Live != nil {
@@ -76,24 +76,24 @@ func liveLine(st State, upload bool) string {
 		}
 	}
 	line := arrow + " " + label + " " + fmt.Sprintf("%.1f Mbps", v*8/1e6)
-	return "  " + kit.Dim.Render(kit.Tr.SpeedRunning+"   "+line)
+	return "  " + style.Dim.Render(style.Tr.SpeedRunning+"   "+line)
 }
 
 // finalLines renders the tool line and the two result rows; speedtest-go
 // always measures both directions.
 func finalLines(st State) []string {
-	out := []string{"  " + kit.Dim.Render(kit.Tr.SpeedTool+" "+st.Tool)}
+	out := []string{"  " + style.Dim.Render(style.Tr.SpeedTool+" "+st.Tool)}
 	down := fmt.Sprintf("↓ %s %.1f Mbps  (%s)",
-		kit.Tr.SpeedDown, st.Down.BPS*8/1e6, kit.HumanBytes(uint64(st.Down.Bytes)))
+		style.Tr.SpeedDown, st.Down.BPS*8/1e6, style.HumanBytes(uint64(st.Down.Bytes)))
 	up := fmt.Sprintf("↑ %s %.1f Mbps  (%s)",
-		kit.Tr.SpeedUp, st.Up.BPS*8/1e6, kit.HumanBytes(uint64(st.Up.Bytes)))
+		style.Tr.SpeedUp, st.Up.BPS*8/1e6, style.HumanBytes(uint64(st.Up.Bytes)))
 	return append(out, "  "+down, "  "+up)
 }
 
 // StartButton is the action row in its idle, not-entered form; the empty
 // second label hides it.
 func StartButton() components.Buttons {
-	b := components.Buttons{Labels: [2]string{kit.Tr.SpeedStart, ""}}
+	b := components.Buttons{Labels: [2]string{style.Tr.SpeedStart, ""}}
 	b.Focus = -1
 	return b
 }
@@ -103,16 +103,16 @@ func StartButton() components.Buttons {
 // tell the pane is live; before that it stays the plain [ 开始测速 ] button.
 func startRow(st State) string {
 	if st.Active {
-		label := kit.Tr.SpeedStart
-		style := kit.Accent
+		label := style.Tr.SpeedStart
+		row := style.Accent
 		if st.Running {
-			label, style = kit.Tr.SpeedRunning, kit.Dim
+			label, row = style.Tr.SpeedRunning, style.Dim
 		}
-		return "  " + style.Render(kit.Glyph.Sel+" "+label)
+		return "  " + row.Render(style.Glyph.Sel+" "+label)
 	}
 	b := StartButton()
 	if st.Running {
-		b.Busy, b.BusyLabel = true, kit.Tr.SpeedRunning
+		b.Busy, b.BusyLabel = true, style.Tr.SpeedRunning
 	}
 	return "  " + b.View()
 }

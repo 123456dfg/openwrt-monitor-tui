@@ -1,16 +1,17 @@
 package cron
 
 import (
+	"openwrt-monitor-tui/ui/i18n"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"openwrt-monitor-tui/collect"
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 )
 
 func TestScheduleKinds(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	f := NewForm()
 
 	f.Kind.Index = KindMinutes
@@ -40,40 +41,40 @@ func TestScheduleKinds(t *testing.T) {
 
 	// the label follows the kind
 	f.Kind.Index = KindDaily
-	if f.WhenLabel() != kit.Tr.CronAt {
+	if f.WhenLabel() != style.Tr.CronAt {
 		t.Fatalf("label: %q", f.WhenLabel())
 	}
 	f.Kind.Index = KindMinutes
-	if f.WhenLabel() != kit.Tr.CronEvery {
+	if f.WhenLabel() != style.Tr.CronEvery {
 		t.Fatalf("label: %q", f.WhenLabel())
 	}
 }
 
 func TestValidate(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	f := NewForm()
 	f.When.Value = "0"
 	f.Command.Value = "/bin/true"
-	if f.Validate() != kit.Tr.ValCronRange {
+	if f.Validate() != style.Tr.ValCronRange {
 		t.Fatal("zero interval accepted")
 	}
 	f.When.Value = "60"
-	if f.Validate() != kit.Tr.ValCronRange {
+	if f.Validate() != style.Tr.ValCronRange {
 		t.Fatal("60 minutes accepted")
 	}
 
 	f.Kind.Index = KindDaily
 	f.When.Value = "25:00"
-	if f.Validate() != kit.Tr.ValCronTime {
+	if f.Validate() != style.Tr.ValCronTime {
 		t.Fatal("invalid hour accepted")
 	}
 	f.When.Value = "8-30"
-	if f.Validate() != kit.Tr.ValCronTime {
+	if f.Validate() != style.Tr.ValCronTime {
 		t.Fatal("missing colon accepted")
 	}
 	f.When.Value = "08:30"
 	f.Command.Value = "   "
-	if f.Validate() != kit.Tr.ValCommand {
+	if f.Validate() != style.Tr.ValCommand {
 		t.Fatal("empty command accepted")
 	}
 	f.Command.Value = " /bin/true "
@@ -87,7 +88,7 @@ func TestValidate(t *testing.T) {
 	// hours are capped at 23, so 24 must fail
 	f.Kind.Index = KindHours
 	f.When.Value = "24"
-	if f.Validate() != kit.Tr.ValCronRange {
+	if f.Validate() != style.Tr.ValCronRange {
 		t.Fatal("24 hours accepted")
 	}
 }
@@ -109,7 +110,7 @@ func TestReset(t *testing.T) {
 }
 
 func TestAddWritesLine(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	path := filepath.Join(t.TempDir(), "root")
 	if err := os.WriteFile(path, []byte("# existing\n"), 0o600); err != nil {
 		t.Fatal(err)
@@ -138,7 +139,7 @@ func TestAddWritesLine(t *testing.T) {
 }
 
 func TestParseScheduleRoundTrip(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	cases := []struct {
 		expr string
 		kind int
@@ -173,7 +174,7 @@ func TestParseScheduleRoundTrip(t *testing.T) {
 }
 
 func TestLoadCustomSchedule(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	f := NewForm()
 	f.Load(collect.CronJob{Schedule: "*/5 3 * * *", Command: "x", Line: 0})
 	if f.KindIndex() != KindCustom || f.When.Value != "*/5 3 * * *" {
@@ -187,13 +188,13 @@ func TestLoadCustomSchedule(t *testing.T) {
 	}
 	// an incomplete expression is rejected once it is edited
 	f.When.Value = "*/5 3"
-	if msg := f.Validate(); msg != kit.Tr.ValCronExpr {
+	if msg := f.Validate(); msg != style.Tr.ValCronExpr {
 		t.Fatalf("validation: %q", msg)
 	}
 }
 
 func TestLoadedFormReset(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	f := NewForm()
 	f.Load(collect.CronJob{Schedule: "30 8 * * *", Command: "/bin/true", Line: 2})
 	f.When.Value = "09:15"
@@ -242,7 +243,7 @@ func TestUpdateRewritesLine(t *testing.T) {
 }
 
 func TestWeekdayHiddenForIntervals(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	f := NewForm()
 	if f.FieldRow(FocusWeekday) != -1 {
 		t.Fatal("weekday row visible for an interval")

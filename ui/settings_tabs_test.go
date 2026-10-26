@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"openwrt-monitor-tui/ui/i18n"
 	"strings"
 	"testing"
 	"time"
@@ -9,11 +10,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"openwrt-monitor-tui/collect"
-	"openwrt-monitor-tui/ui/kit"
 	"openwrt-monitor-tui/ui/settings"
 	"openwrt-monitor-tui/ui/settings/cron"
 	"openwrt-monitor-tui/ui/settings/startup"
 	"openwrt-monitor-tui/ui/settings/system"
+	"openwrt-monitor-tui/ui/style"
 )
 
 // openSection previews and enters a settings section the way the keyboard does.
@@ -30,7 +31,7 @@ func openSection(m model, sec settings.Section) model {
 }
 
 func TestCronSectionExists(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := newTestModel()
 	secs := m.sections()
 	want := []settings.Section{settings.Wifi, settings.Cron, settings.Startup, settings.System, settings.Language}
@@ -42,7 +43,7 @@ func TestCronSectionExists(t *testing.T) {
 			t.Fatalf("section %d: %v", i, secs[i])
 		}
 	}
-	if settings.Name(settings.Cron) != kit.Tr.Cron || settings.Name(settings.System) != kit.Tr.System {
+	if settings.Name(settings.Cron) != style.Tr.Cron || settings.Name(settings.System) != style.Tr.System {
 		t.Fatalf("names: %q %q", settings.Name(settings.Cron), settings.Name(settings.System))
 	}
 }
@@ -64,7 +65,7 @@ func jobList() []collect.CronJob {
 }
 
 func TestCronListShowsCommandsOnly(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := cronModel(jobList()...)
 	m.subActive = true
 	body := strings.Join(m.body(), "\n")
@@ -80,7 +81,7 @@ func TestCronListShowsCommandsOnly(t *testing.T) {
 }
 
 func TestCronEditExistingJob(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := cronModel(jobList()...)
 	key := func(s string) tea.KeyMsg {
 		switch s {
@@ -129,13 +130,13 @@ func TestCronEditExistingJob(t *testing.T) {
 
 	mm, _ = m.Update(cronApplyMsg{updated: true})
 	m = mm.(model)
-	if m.cronTab != cron.TabList || m.cronNote != kit.Tr.CronUpdated || m.cron.EditLine != -1 {
+	if m.cronTab != cron.TabList || m.cronNote != style.Tr.CronUpdated || m.cron.EditLine != -1 {
 		t.Fatalf("after update: tab=%d note=%q line=%d", m.cronTab, m.cronNote, m.cron.EditLine)
 	}
 }
 
 func TestCronUpdateChangesSchedule(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := cronModel(jobList()...)
 	mm, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	m = mm.(model)
@@ -174,7 +175,7 @@ func TestCronUpdateChangesSchedule(t *testing.T) {
 }
 
 func TestCronCancelEndsSession(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := cronModel(jobList()...)
 	mm, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	m = mm.(model)
@@ -188,13 +189,13 @@ func TestCronCancelEndsSession(t *testing.T) {
 	if m.cronTab != cron.TabList || m.cron.EditLine != -1 || m.cron.Command.Value != "" {
 		t.Fatalf("cancel: tab=%d line=%d cmd=%q", m.cronTab, m.cron.EditLine, m.cron.Command.Value)
 	}
-	if m.cronNote != kit.Tr.Reverted {
+	if m.cronNote != style.Tr.Reverted {
 		t.Fatalf("note: %q", m.cronNote)
 	}
 }
 
 func TestCronNewJob(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := cronModel(jobList()...)
 
 	// "n" starts a fresh job in the editor
@@ -208,7 +209,7 @@ func TestCronNewJob(t *testing.T) {
 	m.cron.Focus = cron.FocusApply
 	mm, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	m = mm.(model)
-	if cmd != nil || m.cron.Busy || m.cronErr != kit.Tr.ValCronRange {
+	if cmd != nil || m.cron.Busy || m.cronErr != style.Tr.ValCronRange {
 		t.Fatalf("invalid apply: cmd=%v busy=%v err=%q", cmd != nil, m.cron.Busy, m.cronErr)
 	}
 
@@ -222,13 +223,13 @@ func TestCronNewJob(t *testing.T) {
 	}
 	mm, _ = m.Update(cronApplyMsg{})
 	m = mm.(model)
-	if m.cronTab != cron.TabList || m.cronNote != kit.Tr.CronAdded {
+	if m.cronTab != cron.TabList || m.cronNote != style.Tr.CronAdded {
 		t.Fatalf("after add: tab=%d note=%q", m.cronTab, m.cronNote)
 	}
 }
 
 func TestCronClicks(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := cronModel(jobList()...)
 	m.subActive = true
 
@@ -250,7 +251,7 @@ func TestCronClicks(t *testing.T) {
 	}
 	st := m.settingsState().Cron
 	y := 4 + cron.ContentOffset(st) + 1
-	mm, _ = m.handleMouse(tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress, X: kit.SidebarW + 14, Y: y})
+	mm, _ = m.handleMouse(tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress, X: style.SidebarW + 14, Y: y})
 	m = mm.(model)
 	if m.cronTab != cron.TabEditor || m.cron.EditLine != 3 {
 		t.Fatalf("row click: tab=%d line=%d", m.cronTab, m.cron.EditLine)
@@ -260,7 +261,7 @@ func TestCronClicks(t *testing.T) {
 	off := cron.FormRowOffset(m.settingsState().Cron)
 	mm, _ = m.handleMouse(tea.MouseMsg{
 		Button: tea.MouseButtonLeft, Action: tea.MouseActionPress,
-		X: kit.SidebarW + 6, Y: 4 + off + cron.FocusCommand,
+		X: style.SidebarW + 6, Y: 4 + off + cron.FocusCommand,
 	})
 	got := mm.(model)
 	if !got.cron.Editing || got.cron.Focus != cron.FocusCommand {
@@ -287,7 +288,7 @@ func startupModel(lines int) model {
 }
 
 func TestStartupNavigation(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := startupModel(3)
 	if m.subOpen != settings.Startup || !m.subActive {
 		t.Fatalf("not in startup: open=%v active=%v", m.subOpen, m.subActive)
@@ -330,7 +331,7 @@ func TestStartupNavigation(t *testing.T) {
 }
 
 func TestStartupEditing(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := startupModel(2)
 
 	// enter starts editing the focused task
@@ -382,7 +383,7 @@ func TestStartupEditing(t *testing.T) {
 }
 
 func TestStartupToggle(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := startupModel(2)
 	m.subActive = true
 
@@ -404,7 +405,7 @@ func TestStartupToggle(t *testing.T) {
 }
 
 func TestStartupApplyAndCancel(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := startupModel(2)
 	m.startup.Toggle(1)
 
@@ -417,7 +418,7 @@ func TestStartupApplyAndCancel(t *testing.T) {
 
 	mm, _ = m.Update(startupApplyMsg{})
 	m = mm.(model)
-	if m.startup.Busy || m.startupErr != "" || m.startupNote != kit.Tr.StartupSaved || m.startup.Changed() {
+	if m.startup.Busy || m.startupErr != "" || m.startupNote != style.Tr.StartupSaved || m.startup.Changed() {
 		t.Fatalf("after save: busy=%v err=%q note=%q changed=%v",
 			m.startup.Busy, m.startupErr, m.startupNote, m.startup.Changed())
 	}
@@ -441,7 +442,7 @@ func TestStartupApplyAndCancel(t *testing.T) {
 }
 
 func TestStartupEditsSurviveSamples(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := startupModel(2)
 	m.startup.Toggle(0)
 	m.subActive = true
@@ -462,7 +463,7 @@ func TestStartupEditsSurviveSamples(t *testing.T) {
 }
 
 func TestStartupClicks(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := startupModel(2)
 	m.subActive = true
 	off := startup.LineOffset(m.settingsState().Startup)
@@ -472,7 +473,7 @@ func TestStartupClicks(t *testing.T) {
 	check := [2]int{4, 6}
 	mm, _ := m.handleMouse(tea.MouseMsg{
 		Button: tea.MouseButtonLeft, Action: tea.MouseActionPress,
-		X: kit.SidebarW + 2 + check[0], Y: 4 + off,
+		X: style.SidebarW + 2 + check[0], Y: 4 + off,
 	})
 	m = mm.(model)
 	if first, _ := m.startup.TaskAt(0); first.Enabled || m.startup.Focus != 0 {
@@ -481,7 +482,7 @@ func TestStartupClicks(t *testing.T) {
 
 	mm, _ = m.handleMouse(tea.MouseMsg{
 		Button: tea.MouseButtonLeft, Action: tea.MouseActionPress,
-		X: kit.SidebarW + 12, Y: 4 + off + 1,
+		X: style.SidebarW + 12, Y: 4 + off + 1,
 	})
 	m = mm.(model)
 	if !m.startup.Editing || m.startup.Focus != 1 {
@@ -497,7 +498,7 @@ func TestStartupClicks(t *testing.T) {
 	ap := btns.Hits()[0]
 	mm, cmd := m.handleMouse(tea.MouseMsg{
 		Button: tea.MouseButtonLeft, Action: tea.MouseActionPress,
-		X: kit.SidebarW + 2 + ap[0], Y: 4 + row,
+		X: style.SidebarW + 2 + ap[0], Y: 4 + row,
 	})
 	got := mm.(model)
 	if cmd == nil || !got.startup.Busy {
@@ -506,7 +507,7 @@ func TestStartupClicks(t *testing.T) {
 }
 
 func TestCronToggle(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := cronModel(jobList()...)
 	m.subActive = true
 
@@ -533,7 +534,7 @@ func TestCronToggle(t *testing.T) {
 	st := m.settingsState().Cron
 	mm, cmd = m.handleMouse(tea.MouseMsg{
 		Button: tea.MouseButtonLeft, Action: tea.MouseActionPress,
-		X: kit.SidebarW + 2 + check[0], Y: 4 + cron.ContentOffset(st),
+		X: style.SidebarW + 2 + check[0], Y: 4 + cron.ContentOffset(st),
 	})
 	if cmd == nil {
 		t.Fatal("switch click did not toggle")
@@ -541,13 +542,13 @@ func TestCronToggle(t *testing.T) {
 }
 
 func TestCronLoadingState(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := cronModel(jobList()...)
 	m.snap.Cron.Loading = true
 	m.subActive = true
 
 	body := strings.Join(m.body(), "\n")
-	if !strings.Contains(body, kit.Tr.Loading) {
+	if !strings.Contains(body, style.Tr.Loading) {
 		t.Fatalf("loading placeholder missing:\n%s", body)
 	}
 	if strings.Contains(body, "/usr/bin/logger hi") {
@@ -557,20 +558,20 @@ func TestCronLoadingState(t *testing.T) {
 	// the editor tab does not depend on the file
 	m.cronTab = cron.TabEditor
 	body = strings.Join(m.body(), "\n")
-	if strings.Contains(body, kit.Tr.Loading) || !strings.Contains(body, kit.Tr.CronKind) {
+	if strings.Contains(body, style.Tr.Loading) || !strings.Contains(body, style.Tr.CronKind) {
 		t.Fatalf("editor while loading:\n%s", body)
 	}
 }
 
 func TestStartupLoadingState(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := startupModel(2)
 	m.snap.Startup.Loading = true
 	m.syncForm() // must keep the form that is already loaded
 	m.subActive = true
 
 	body := strings.Join(m.body(), "\n")
-	if !strings.Contains(body, kit.Tr.Loading) || strings.Contains(body, "/bin/task0") {
+	if !strings.Contains(body, style.Tr.Loading) || strings.Contains(body, "/bin/task0") {
 		t.Fatalf("loading pane:\n%s", body)
 	}
 	if m.startup.TaskCount() != 2 {
@@ -580,13 +581,13 @@ func TestStartupLoadingState(t *testing.T) {
 	m.snap.Startup.Loading = false
 	m.syncForm()
 	body = strings.Join(m.body(), "\n")
-	if strings.Contains(body, kit.Tr.Loading) || !strings.Contains(body, "/bin/task0") {
+	if strings.Contains(body, style.Tr.Loading) || !strings.Contains(body, "/bin/task0") {
 		t.Fatalf("after load:\n%s", body)
 	}
 }
 
 func TestNewSkipsJobFiles(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := New(time.Second, time.Now()).(model)
 	if m.snap.Cron.Path != "" || m.snap.Startup.Path != "" {
 		t.Fatalf("startup parsed the job files: cron=%q startup=%q", m.snap.Cron.Path, m.snap.Startup.Path)
@@ -597,7 +598,7 @@ func TestNewSkipsJobFiles(t *testing.T) {
 }
 
 func TestJobsReloadMessage(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := cronModel(jobList()...)
 	mm, _ := m.Update(jobsReloadMsg{
 		cron: collect.CronInfo{Available: true, Path: "/etc/crontabs/root", Jobs: []collect.CronJob{
@@ -615,7 +616,7 @@ func TestJobsReloadMessage(t *testing.T) {
 }
 
 func TestCronToggleRequestsReload(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := cronModel(jobList()...)
 	mm, cmd := m.Update(tea.KeyMsg{Type: tea.KeySpace})
 	m = mm.(model)
@@ -629,7 +630,7 @@ func TestCronToggleRequestsReload(t *testing.T) {
 }
 
 func TestSettingsArrowScope(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	base := newTestModel()
 	base.tab = 0
 	base.setTab(tabSettings)
@@ -676,13 +677,13 @@ func TestSettingsArrowScope(t *testing.T) {
 }
 
 func TestSystemSection(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := openSection(newTestModel(), settings.System)
 	if !m.subActive || m.subOpen != settings.System {
 		t.Fatalf("not in system: open=%v active=%v", m.subOpen, m.subActive)
 	}
 	body := strings.Join(m.body(), "\n")
-	for _, want := range []string{kit.Tr.SysReboot, kit.Tr.SysPoweroff, kit.Tr.SysFactory, kit.Tr.SysHint} {
+	for _, want := range []string{style.Tr.SysReboot, style.Tr.SysPoweroff, style.Tr.SysFactory, style.Tr.SysHint} {
 		if !strings.Contains(body, want) {
 			t.Fatalf("%q missing:\n%s", want, body)
 		}
@@ -743,10 +744,10 @@ func TestSystemSection(t *testing.T) {
 }
 
 func TestSystemClicks(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := openSection(newTestModel(), settings.System)
 	m.subActive = true
-	x := kit.SidebarW + 6
+	x := style.SidebarW + 6
 
 	// click the factory row: selects it and asks for confirmation
 	mm, cmd := m.handleMouse(tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress,

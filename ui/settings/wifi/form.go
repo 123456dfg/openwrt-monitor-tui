@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"openwrt-monitor-tui/collect"
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 	"openwrt-monitor-tui/ui/widgets/components"
 )
 
@@ -102,20 +102,20 @@ func (f Form) Validate() string {
 	if ch != "auto" {
 		n, err := strconv.Atoi(ch)
 		if err != nil || n < 1 || n > 233 {
-			return kit.Tr.ValChannel
+			return style.Tr.ValChannel
 		}
 	}
 	if f.Iface == "" {
 		return ""
 	}
 	if f.SSID.Value == "" {
-		return kit.Tr.ValSSIDEmpty
+		return style.Tr.ValSSIDEmpty
 	}
 	if len(f.SSID.Value) > 32 {
-		return kit.Tr.ValSSIDLong
+		return style.Tr.ValSSIDLong
 	}
 	if NeedsKey(f.Security.Value()) && (len(f.Key.Value) < 8 || len(f.Key.Value) > 63) {
-		return kit.Tr.ValPassword
+		return style.Tr.ValPassword
 	}
 	return ""
 }
@@ -279,21 +279,21 @@ func intStrings(ns []int) []string {
 func ChannelHint(band string) string {
 	switch band {
 	case "6 GHz":
-		return kit.Tr.Hint6
+		return style.Tr.Hint6
 	case "60 GHz":
-		return kit.Tr.Hint60
+		return style.Tr.Hint60
 	case "2.4 GHz":
-		return kit.Tr.Hint24
+		return style.Tr.Hint24
 	case "5 GHz":
-		return kit.Tr.Hint5
+		return style.Tr.Hint5
 	}
-	return kit.Tr.HintOther
+	return style.Tr.HintOther
 }
 
 func SecurityLabel(enc string) string {
 	switch strings.SplitN(enc, "+", 2)[0] {
 	case "", "none":
-		return kit.Tr.Open
+		return style.Tr.Open
 	case "psk":
 		return "WPA-PSK"
 	case "psk2":

@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"openwrt-monitor-tui/collect"
-	"openwrt-monitor-tui/ui/kit"
+	"openwrt-monitor-tui/ui/style"
 	"openwrt-monitor-tui/ui/widgets/components"
 )
 
@@ -237,10 +237,10 @@ func (f Form) Body() string {
 // Buttons describes the action row for the shared button widget.
 func (f Form) Buttons() components.Buttons {
 	return components.Buttons{
-		Labels:    [2]string{kit.Tr.Apply, kit.Tr.Cancel},
+		Labels:    [2]string{style.Tr.Apply, style.Tr.Cancel},
 		Focus:     buttonIndex(f),
 		Busy:      f.Busy,
-		BusyLabel: kit.Tr.Applying,
+		BusyLabel: style.Tr.Applying,
 	}
 }
 

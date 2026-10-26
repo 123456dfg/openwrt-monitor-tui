@@ -130,6 +130,9 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.netOpen == network.TabSpeed {
 			return m.updateSpeed(msg)
 		}
+		if m.netOpen == network.TabPorts {
+			return m.updatePorts(msg)
+		}
 		// The entered overview keeps the generic scroll keys below.
 	} else if m.tab == 1 {
 		// The sidebar is still part of the main tab: arrows keep their usual

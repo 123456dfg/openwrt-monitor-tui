@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"openwrt-monitor-tui/ui/i18n"
 	"strings"
 	"testing"
 	"time"
@@ -10,13 +11,13 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"openwrt-monitor-tui/collect"
-	"openwrt-monitor-tui/ui/kit"
 	"openwrt-monitor-tui/ui/network"
 	"openwrt-monitor-tui/ui/network/speedtest"
 	"openwrt-monitor-tui/ui/settings"
 	"openwrt-monitor-tui/ui/settings/cron"
 	"openwrt-monitor-tui/ui/settings/wifi"
 	"openwrt-monitor-tui/ui/status"
+	"openwrt-monitor-tui/ui/style"
 	"openwrt-monitor-tui/ui/widgets/components"
 )
 
@@ -44,7 +45,7 @@ func fixture() collect.Snapshot {
 func newTestModel() model {
 	m := model{
 		col: collect.NewCollector(), snap: fixture(), tab: tabSettings, w: 100, h: 24,
-		langSel: kit.LangChoice(), langFocus: kit.LangChoice(),
+		langSel: i18n.LangChoice(), langFocus: i18n.LangChoice(),
 		traffic: network.NewTracker(),
 		hist:    status.NewTracker(),
 		cron:    cron.NewForm(),
@@ -58,7 +59,7 @@ func newTestModel() model {
 // translate into pane coordinates (sidebar width + gutter), and the sidebar
 // itself must be keyboard-navigable like the settings tab.
 func TestSpeedPaneMouse(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := newTestModel()
 	m.tab = 1
 	m.netOpen, m.netActive = network.TabSpeed, true
@@ -70,7 +71,7 @@ func TestSpeedPaneMouse(t *testing.T) {
 
 	// A click on the start button starts the measurement flow (the returned
 	// command is not executed here, so no network is touched).
-	mm, cmd := m.handleMouse(click(kit.SidebarW+10, startY))
+	mm, cmd := m.handleMouse(click(style.SidebarW+10, startY))
 	m = mm.(model)
 	if cmd == nil {
 		t.Fatal("start click produced no command")
@@ -80,7 +81,7 @@ func TestSpeedPaneMouse(t *testing.T) {
 	}
 
 	// One row below the button must do nothing.
-	mm, cmd = m.handleMouse(click(kit.SidebarW+10, startY+1))
+	mm, cmd = m.handleMouse(click(style.SidebarW+10, startY+1))
 	m = mm.(model)
 	if cmd != nil {
 		t.Fatal("click beside the button started something")
@@ -90,7 +91,7 @@ func TestSpeedPaneMouse(t *testing.T) {
 // The network sidebar navigates like the settings sidebar: j/k previews,
 // enter opens, esc returns.
 func TestNetworkSidebarKeyboard(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := newTestModel()
 	m.tab = 1
 
@@ -139,9 +140,9 @@ func TestNetworkSidebarKeyboard(t *testing.T) {
 }
 
 func TestTabMarkersWithoutColor(t *testing.T) {
-	kit.SetLang("en")
-	kit.SetColor(false)
-	t.Cleanup(func() { kit.SetColor(true) })
+	i18n.SetLang("en")
+	style.SetColor(false)
+	t.Cleanup(func() { style.SetColor(true) })
 
 	m := newTestModel()
 	m.tab = 1
@@ -157,7 +158,7 @@ func TestTabMarkersWithoutColor(t *testing.T) {
 }
 
 func TestSettingsEnterAndBack(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := newTestModel()
 	m.tab = 0
 	m.setTab(tabSettings)
@@ -178,7 +179,7 @@ func TestSettingsEnterAndBack(t *testing.T) {
 }
 
 func TestClickToggleAndInput(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := newTestModel()
 	m.subActive = true
 	off := wifi.FormRowOffset(m.settingsState().Wifi)
@@ -207,7 +208,7 @@ func TestClickToggleAndInput(t *testing.T) {
 }
 
 func TestButtonsShareRow(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := newTestModel()
 	m.subActive = true
 	m.form.SSID.Value = "new"
@@ -222,22 +223,22 @@ func TestButtonsShareRow(t *testing.T) {
 		t.Fatal("unexpected button count")
 	}
 
-	btns := components.Buttons{Labels: [2]string{kit.Tr.Apply, kit.Tr.Cancel}}
+	btns := components.Buttons{Labels: [2]string{style.Tr.Apply, style.Tr.Cancel}}
 	hits := btns.Hits()
 	mm, cmd := m.handleMouse(tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress,
-		X: kit.SidebarW + 2 + hits[0][0], Y: y})
+		X: style.SidebarW + 2 + hits[0][0], Y: y})
 	if got := mm.(model); got.form.Focus != wifi.FocusApply || !got.form.Busy || cmd == nil {
 		t.Fatal("apply click did not dispatch")
 	}
 	mm, _ = m.handleMouse(tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress,
-		X: kit.SidebarW + 2 + hits[1][0], Y: y})
+		X: style.SidebarW + 2 + hits[1][0], Y: y})
 	if got := mm.(model); got.form.SSID.Value != "OpenWrt" {
 		t.Fatal("cancel click did not revert")
 	}
 }
 
 func TestStatusBarTiming(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := newTestModel()
 	m.tab = 0
 	m.refresh = time.Second
@@ -283,14 +284,14 @@ func checkReset(t *testing.T, m model, how string) {
 	if m.formNote != "" || m.formErr != "" {
 		t.Fatalf("%s: messages survived: %q %q", how, m.formNote, m.formErr)
 	}
-	if m.langFocus != m.langSel || m.langSel != kit.LangChoice() {
+	if m.langFocus != m.langSel || m.langSel != i18n.LangChoice() {
 		t.Fatalf("%s: language focus=%d sel=%d", how, m.langFocus, m.langSel)
 	}
 }
 
 func TestSettingsResetOnEnter(t *testing.T) {
-	kit.SetLang("en")
-	t.Cleanup(func() { kit.SetLang("en") })
+	i18n.SetLang("en")
+	t.Cleanup(func() { i18n.SetLang("en") })
 
 	// direct setTab
 	m := dirtySettings(newTestModel())
@@ -327,8 +328,8 @@ func TestSettingsResetOnEnter(t *testing.T) {
 }
 
 func TestBandArrows(t *testing.T) {
-	kit.SetLang("en")
-	t.Cleanup(func() { kit.SetLang("en") })
+	i18n.SetLang("en")
+	t.Cleanup(func() { i18n.SetLang("en") })
 
 	// preselected: the sidebar only previews the pane, so the arrows still
 	// belong to the main tabs instead of the band selector
@@ -397,13 +398,13 @@ func TestBandArrows(t *testing.T) {
 	band := m.band
 	mm, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
 	m = mm.(model)
-	if m.band != band || m.formNote != kit.Tr.ApplyFirst {
+	if m.band != band || m.formNote != style.Tr.ApplyFirst {
 		t.Fatalf("dirty block: band=%d note=%q", m.band, m.formNote)
 	}
 }
 
 func TestListRowsNeedEnter(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := newTestModel()
 	m.tab = 0
 	m.setTab(tabSettings)
@@ -474,7 +475,7 @@ func TestListRowsNeedEnter(t *testing.T) {
 }
 
 func TestClickListRowOnlyFocuses(t *testing.T) {
-	kit.SetLang("en")
+	i18n.SetLang("en")
 	m := newTestModel()
 	m.subActive = true
 	off := wifi.FormRowOffset(m.settingsState().Wifi)
@@ -490,9 +491,9 @@ func TestClickListRowOnlyFocuses(t *testing.T) {
 }
 
 func TestBootTimeInTabBar(t *testing.T) {
-	kit.SetLang("en")
-	kit.SetColor(false)
-	t.Cleanup(func() { kit.SetColor(true) })
+	i18n.SetLang("en")
+	style.SetColor(false)
+	t.Cleanup(func() { style.SetColor(true) })
 
 	m := newTestModel()
 	m.boot = 12 * time.Millisecond
